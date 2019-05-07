@@ -11,24 +11,18 @@ namespace {
 //..............................................................................
 Duplicator_module::Duplicator_module( sc_module_name instance ) //< Constructor
 {
-  SC_HAS_PROCESS( Duplicator_module );
-  SC_THREAD( duplicator_thread );
   // Connectivity
   out1_xport.bind( out1_fifo );
   out2_xport.bind( out2_fifo );
-}
-
-//..............................................................................
-Duplicator_module::~Duplicator_module( void ) = default;
-
-//..............................................................................
-void Duplicator_module::duplicator_thread( void )
-{
-  RawData_t v;
-  for(;;) {
-    v = input_port->read();
-    INFO( DEBUG, "Duplicating " << v );
-    out1_fifo.write( v );
-    out2_fifo.write( v );
-  }
+  // Process
+  auto m = this;
+  sc_spawn( [m]{
+    RawData_t v;
+    for(;;) {
+      v = m->input_port->read();
+      INFO( DEBUG, "Duplicating " << v );
+      m->out1_fifo.write( v );
+      m->out2_fifo.write( v );
+    }
+  }, "duplicator_thread" );
 }
