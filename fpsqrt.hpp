@@ -30,4 +30,3 @@ static FixedPt_t fpsqrt ( FixedPt_t X );
 
 };
 #endif/*FSQRT_HPP*/
-

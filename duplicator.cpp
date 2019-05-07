@@ -32,4 +32,3 @@ void Duplicator_module::duplicator_thread( void )
     fifo2.write( v );
   }
 }
-

@@ -96,4 +96,3 @@ struct DELETE_THIS
 #endif/*__SYNTHESIS__*/
 
 #endif/*REPORT_HPP*/
-

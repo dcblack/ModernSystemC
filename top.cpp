@@ -45,4 +45,3 @@ Top_module::Top_module( sc_module_name instance ) //< Constructor
 
 //..............................................................................
 Top_module::~Top_module( void ) = default;
-

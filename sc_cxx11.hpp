@@ -31,4 +31,3 @@ inline sc_core::sc_time operator "" _fs  (long double val)        { return sc_co
 inline sc_core::sc_time operator "" _fs  (unsigned long long val) { return sc_core::sc_time( double(val), sc_core::SC_FS  );         }
 #endif
 #endif/*SC_CXX11_HPP*/
-

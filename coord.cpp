@@ -17,4 +17,3 @@ std::ostream& operator<<( std::ostream& os, const Coordinate& rhs )
   os << "{" << rhs.x() << "," << rhs.y() << "," << rhs.z() << "}";
   return os;
 }
-

@@ -26,4 +26,3 @@ private:
   size_t verified_count { 0 };
 };
 #endif/*CHECKER_HPP*/
-

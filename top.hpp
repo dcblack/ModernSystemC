@@ -23,4 +23,3 @@ SC_MODULE( Top_module )
   sc_core::sc_buffer<FixedPt_t>      result_buffer { "result_buffer" };
 };
 #endif/*TOP_HPP*/
-

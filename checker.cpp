@@ -32,7 +32,6 @@ void Checker_module::anticipate_method( void )
   RawData_t v;
   while( rawin_port->nb_read( v ) ) {
     FixedPt_t magnitude = FP::fpsqrt( v.x()*v.x() + v.y()*v.y() + v.z()*v.z() );
-    INFO( DEBUG, "From " << v << " expected data " << magnitude.to_string() << " arrived" );
     expect_fifo.nb_put( magnitude );
   }
   next_trigger( rawin_port->data_written_event() );
@@ -42,7 +41,6 @@ void Checker_module::anticipate_method( void )
 void Checker_module::received_method( void )
 {
   auto d = result_port->read();
-  INFO( DEBUG, "Incoming data " << d << " arrived" );
   result_fifo.put( d );
 }
 
@@ -54,13 +52,10 @@ void Checker_module::checker_thread( void )
   REPORT( INFO, "Preparing checker" );
   for(;;) {
     // Is anything expected?
-    INFO( DEBUG, "Waiting for expected" );
     expect_value = expect_fifo.get();
-    INFO( DEBUG, "Obtained expected" );
     {
       Objection verifying{ name() };
       // Wait for result
-      INFO( DEBUG, "Waiting for actual" );
       actual_value = result_fifo.get();
       // Compare result
       MESSAGE( "Expect:" << expect_value.to_string()
@@ -73,9 +68,6 @@ void Checker_module::checker_thread( void )
         MESSAGE( " FAILURE" );
         MEND( ALWAYS );
         ++mismatches;
-      } else {
-        MESSAGE( " SUCCESS" );
-        MEND( DEBUG );
       }
       ++verified_count;
     }
@@ -89,4 +81,3 @@ void Checker_module::end_of_simulation( void )
   INFO( ALWAYS, "Had " << std::to_string( mismatches ) << " mismatches" );
   INFO( ALWAYS, "Objected " << Objection::total() << " times" );
 }
-

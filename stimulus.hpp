@@ -15,4 +15,3 @@ private:
   void stimulus_thread( void );
 };
 #endif/*STIMULUS_HPP*/
-

@@ -45,4 +45,3 @@ void Processing_module::processing_thread( void )
     }
   }
 }
-

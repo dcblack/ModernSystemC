@@ -20,4 +20,3 @@ private:
   void duplicator_thread( void );
 };
 #endif/*DUPLICATOR_HPP*/
-

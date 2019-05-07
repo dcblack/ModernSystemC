@@ -23,4 +23,3 @@ std::set<std::string>& Objection::collection( void )
   static std::set<std::string> objections;
   return objections;
 }
-

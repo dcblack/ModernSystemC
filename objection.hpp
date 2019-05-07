@@ -50,4 +50,3 @@ private:
   static constexpr const char* const MSGID { "/Doulos/Objection" };
 };
 #endif/*OBJECTION_HPP*/
-

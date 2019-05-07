@@ -62,4 +62,3 @@ FixedPt_t FP::fpsqrt ( FixedPt_t x )
     q /= (1<<8);
     return q;
 }
-

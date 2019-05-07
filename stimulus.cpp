@@ -48,4 +48,3 @@ void Stimulus_module::stimulus_thread( void )
   }
   REPORT( INFO, "Stimulus complete" );
 }
-

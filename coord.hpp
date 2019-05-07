@@ -59,4 +59,3 @@ struct Coordinate
 private:
   std::valarray<T> m_data;
 };
-

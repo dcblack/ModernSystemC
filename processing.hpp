@@ -18,4 +18,3 @@ private:
   void processing_thread( void );
 };
 #endif/*PROCESSING_HPP*/
-
