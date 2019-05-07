@@ -1,0 +1,360 @@
+#!/bin/bash
+#
+# $Info: Invoke cmake/make in build directory if present and generate logfile. $
+version=1.2
+function Do_Help() {
+cat >/dev/null <<HELP_TEXT
+Purpose
+-------
+
+Build and optionally run the specified target.
+
+Syntax 
+-------
+
+  build [OPTIONS] TARGET
+
+Options
+-------
+
++ -- ............ pass remaining arguments to executable (implies -run)
++ -B _dir_ ...... specify build directory
++ -check ........ run cppcheck
++ -clean ........ make clean before building
++ -clear ........ clear out cmake intermediary files for rebuild
++ -d ............ debug mode
++ --help ........ display this help text and exit
++ -gdb .......... invoke with gdb
++ --list ........ list executable targets and exit
++ -M _maker_ .... specify a maker from: make, gmake, ninja
++ -n ............ not really -- just parse arguments
++ -rel .......... release
++ -run .......... execute after compile
++ -v ............ verbose compile
++ --version ..... report version
+
+Requires
+--------
+
++ bash
++ perl
++ cmake
++ gdb
++ ninja or make
++ cppcheck
++ filter-mlog
++ filter-sclog
++ realpath
++ header
++ ruler
+
+HELP_TEXT
+perl -ne 'if(m{^cat.*<<HELP} .. m{^HELP}){print unless m/HELP_TEXT/;}' $0
+exit 0
+}
+if [[ "$*" == "-h" || "$*" == "--help" ]]; then
+  Do_Help
+fi
+
+#-------------------------------------------------------------------------------
+# Support functions
+#-------------------------------------------------------------------------------
+let error_count=0
+function Error() { # Call this with message to report errors
+  echo "ERROR: $@" 1>&2
+  let error_count++
+}
+function firstreal () { # returns first argument that is a real file or directory
+    perl -le 'for(@ARGV){next unless -e $_;print $_;exit 0;}' "$@"
+}
+function add_suffix () { # adds the first element to the remaining elements
+    local suffix="$1";
+    shift;
+    for element in "$@"; do
+        echo "$element$suffix";
+    done
+}
+function findbin() {
+  for x in $(perl -le 'print join(q{ },split(/:/,$ENV{PATH}))'); do
+    if [[ -x "$x/$1" ]]; then echo "$x/$1"; return; fi
+  done
+  echo ""
+}
+
+#-------------------------------------------------------------------------------
+# Determine build directory (may be overridden later)
+#-------------------------------------------------------------------------------
+BUILD_DIRNAME='build'
+BUILD_LOGNAME='build.log'
+RUN_LOGNAME='run.log'
+CMAKELIST="$(realpath $(firstreal $(add_suffix /CMakeLists.txt . .. ../.. ../../..)))"
+ROOT_DIR=$(dirname "$CMAKELIST")
+BUILD_DIR="$(realpath $(firstreal $(add_suffix /$BUILD_DIRNAME . .. ../.. ../../..) .))"
+
+#-------------------------------------------------------------------------------
+# Check for proper environment variables
+#-------------------------------------------------------------------------------
+USE_SYSC=$(perl -lne 'BEGIN{$u=0;} $u=1 if m/SystemC.cmake/; END{print $u;}' "$CMAKELIST")
+for var in SYSTEMC PROJ_ROOT CXX CC ; do
+  if [[ $var == SYSTEMC && $USE_SYSC == 0 ]]; then continue; fi
+  perl -e 'exit (not exists $ENV{"$ARGV[0]"})' $var ||\
+    Error "Missing definition of \$$var."
+done
+if [[ $var == SYSTEMC && $USE_SYSC == 1 ]]; then
+  sc_ver_file="$SYSTEMC/include/sysc/kernel/sc_ver.h"
+  if [[ ! -r $sc_ver_file ]]; then
+    Error "SYSTEMC does not refer to a proper installation."
+  fi
+fi
+
+#-------------------------------------------------------------------------------
+# Setup option defaults
+#-------------------------------------------------------------------------------
+HERE=$(/bin/pwd)
+TARGET="" # default
+MAKER=""
+BUILD_TYPE=""
+CMAKE_OPTS=""
+MAKE_OPTS=""
+RUN_OPTS=""
+ARGS=""
+RUN_FLAG=0
+CLEAR_FLAG=0
+CLEAN_FLAG=0
+CHECK_FLAG=0
+GDBP=""
+NAH=0
+# If name of script is run...
+if [[ $0 =~ .*run ]]; then
+  RUN_FLAG=1
+fi
+
+if [[ -d "$BUILD_DIRNAME" ]]; then
+  if [[ -r "$BUILD_DIRNAME/Makefile" ]]; then
+    for MAKER in gmake make; do
+      if [[ "$(findbin $MAKER)" != '' ]]; then
+        break
+      fi
+    done
+  elif [[ -r "$BUILD_DIRNAME/build.ninja" ]]; then
+    MAKER=ninja
+  fi
+fi
+
+#-------------------------------------------------------------------------------
+# Scan command-line for option overrides
+#-------------------------------------------------------------------------------
+while [[ "$1" =~ -.* ]]; do
+  if [[ "$1" == "-v" ]]; then
+    MAKE_OPTS="${MAKE_OPTS} VERBOSE=1"
+    RUN_OPTS="${RUN_OPTS} -v"
+    VERBOSE=1
+    shift
+  elif [[ "$1" == '-h' || "$1" == '--help' ]]; then
+    Do_Help
+  elif [[ "$1" == '--list' ]]; then
+    printf "Targets\n  all\n  clean\n"
+    perl -lne 'print "  $1" if m{add_executable[(]\s*(\w+)}' "$CMAKELIST" | sort
+    exit 0
+  elif [[ "$1" == '-n' ]]; then
+    NAH=1
+    shift
+  elif [[ "$1" == '-norun' ]]; then
+    RUN_FLAG=0
+    shift
+  elif [[ "$1" == '-rel' ]]; then
+    if [[ "$BUILD_TYPE" != '' ]]; then
+      Error "Conflicting build types"
+    fi
+    BUILD_TYPE=Release
+    CMAKE_OPTS="${CMAKE_OPTS} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+    shift
+  elif [[ "$1" == '-run' ]]; then
+    RUN_FLAG=1
+    shift
+  elif [[ "$1" == '-check' ]]; then
+    CHECK_FLAG=1
+    if [[ "$(findbin cppcheck)" == '' ]]; then
+      Error "Unable to find 'cppcheck' tool"
+    else
+    CPPCHECK_VERSION="$(cppcheck --version | perl -lane 'chomp; print $F[1];')"
+    fi
+    shift
+  elif [[ "$1" == '-clean' ]]; then
+    CLEAN_FLAG=1
+    shift
+  elif [[ "$1" == '-clear' ]]; then
+    CLEAR_FLAG=1
+    shift
+  elif [[ "$1" == '-gdb' ]]; then
+    RUN_FLAG=1
+    GDBP=gdb
+    shift
+  elif [[ "$1" == '-B' ]]; then
+    if [[ $# -ge 2 && -d "$2" ]]; then
+      BUILD_DIR="$(realpath $2)"
+      shift
+    else
+      Error "Must supply existing directory name with $1 option."
+    fi
+    shift
+  elif [[ "$1" == '-M' ]]; then
+    if [[ $# -ge 2 ]]; then
+      MAKER="$2"
+      shift
+    else
+      Error "Must supply directory name with $1 option."
+    fi
+    shift
+  elif [[ "$1" == '-debug' ]]; then
+    if [[ "$BUILD_TYPE" != '' ]]; then
+      Error "Conflicting build types"
+    fi
+    BUILD_TYPE=Debug
+    CMAKE_OPTS="${CMAKE_OPTS} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+    RUN_OPTS="${RUN_OPTS} -debug"
+    shift
+  elif [[ "$1" == '--version' ]]; then
+    echo "INFO: 'build' tool version $version"
+    shift
+  elif [[ "$1" == '--' ]]; then
+    RUN_FLAG=1
+    shift
+    ARGS="$@"
+    # Remove remaining arguments
+    while [[ $# != 0 ]]; do
+      shift
+    done
+  else
+    break
+  fi
+done
+if [[ -r "$CMAKELIST" ]]; then
+  TARGET=$(perl -lane 'if(m{add_executable[\(] *([^[:space:]]+)}){print $1; exit 0;}' "$CMAKELIST")
+fi
+if [[ $# > 0 ]]; then
+  TARGET="$1"
+  shift
+elif [[ "$TARGET" == "" ]]; then
+  echo "INFO: Using default target - all"
+else
+  echo "INFO: Using default target - $TARGET"
+fi
+sleep 2
+
+#-------------------------------------------------------------------------------
+# Put up a big banner
+#-------------------------------------------------------------------------------
+if [[ $NAH == 0 ]]; then
+  ruler '*'
+fi
+
+if [[ "$TARGET" != "" ]]; then
+  if [[ $error_count == 0 ]]; then
+    header -uc "$TARGET"
+  else
+    echo "> $TARGET"
+  fi
+fi
+
+#-------------------------------------------------------------------------------
+# Choose build-system
+#-------------------------------------------------------------------------------
+if [[ "$MAKER" == '' || "$(findbin $MAKER)" == '' ]]; then
+  for MAKER in ninja gmake make; do
+    if [[ "$(findbin $MAKER)" != '' ]]; then
+      break
+    fi
+  done
+fi
+if [[ "$(findbin $MAKER)" == '' ]]; then
+  Error "Unable to find valid 'make' tool"
+fi
+GENERATOR='Unix Makefiles'
+test "$MAKER" == 'ninja' && GENERATOR='Ninja'
+
+if [[ error_count -gt 0 ]]; then
+  echo "Please fix errors and retry."
+  exit 1
+fi
+
+if [[ $NAH == 1 ]]; then
+  echo "MAKER=$MAKER"
+  echo "TARGET=$TARGET"
+  echo "CMAKELIST='$CMAKELIST'"
+  echo "ROOT_DIR='$ROOT_DIR'"
+  echo "BUILD_DIR='$BUILD_DIR'"
+  exit 0
+fi
+
+#-------------------------------------------------------------------------------
+# Move into build directory if present (recommended)
+#-------------------------------------------------------------------------------
+if [[ "$BUILD_DIR" != '.' ]]; then
+  mkdir -p "$BUILD_DIR"
+  echo "cd $BUILD_DIR"
+  cd "$BUILD_DIR" 1>/dev/null
+fi
+
+#-------------------------------------------------------------------------------
+# Build
+#-------------------------------------------------------------------------------
+rm -f "$BUILD_LOGNAME" $RUN_LOGNAME "$ROOT_DIR/$BUILD_LOGNAME" "$ROOT_DIR/$RUN_LOGNAME"
+if [[ -r $CMAKELIST ]]; then
+  if [[ $CLEAR_FLAG == 1 && -r CMakeCache.txt ]]; then
+    rm -fr CMakeCache.txt CMakeFiles Makefile *.ninja cmake_install.cmake
+  fi
+  echo "cmake -G '$GENERATOR' ${CMAKE_OPTS} '$ROOT_DIR' 2>&1 | tee -a $BUILD_LOGNAME"
+  cmake -G "$GENERATOR" "${CMAKE_OPTS}" -S "$ROOT_DIR"
+fi
+if [[ $CHECK_FLAG == 1 ]]; then
+  cmake -G "$GENERATOR" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "${CMAKE_OPTS}" -S "$ROOT_DIR"
+  cppcheck --enable=all -D__cppcheck__=$CPPCHECK_VERSION >$CHECK_LOGNAME
+fi
+if [[ $CLEAN_FLAG == 1 ]]; then
+  echo "$MAKER clean 2>&1 | tee -a '$ROOT_DIR/$BUILD_LOGNAME'"
+  $MAKER clean 2>&1 | tee -a "$ROOT_DIR/$BUILD_LOGNAME"
+fi
+if [[ "$TARGET" == "" ]]; then
+  TARGET=$($MAKER help | perl -lane '/^\.\.\. .*\.x$/ && print $F[1]')
+  header -uc "$TARGET"
+fi
+if [[ -x $TARGET ]]; then rm $TARGET; fi
+echo "$MAKER $TARGET ${MAKE_OPTS} 2>&1 | tee -a '$ROOT_DIR/$BUILD_LOGNAME'"
+$MAKER $TARGET ${MAKE_OPTS} 2>&1 | c++filt |tee -a "$ROOT_DIR/$BUILD_LOGNAME"
+filter-mlog "$ROOT_DIR/$BUILD_LOGNAME"
+
+#-------------------------------------------------------------------------------
+# Run
+#-------------------------------------------------------------------------------
+if [[ $RUN_FLAG == 1 ]]; then
+  date '+Timestamp: %D %T' > "$BUILD_DIR/$RUN_LOGNAME"
+  echo "% cd $ROOT_DIR" | tee -a "$BUILD_DIR/$RUN_LOGNAME"
+  cd "$ROOT_DIR";
+  echo "% export DEBUG=1" | tee -a "$BUILD_DIR/$RUN_LOGNAME"
+  echo "% export LD_LIBRARY_PATH=$SYSTEMC/lib" | tee -a "$BUILD_DIR/$RUN_LOGNAME"
+  echo "% $GDBP '$BUILD_DIR/$TARGET' -- $RUN_OPTS $ARGS 2>&1" | tee -a "$BUILD_DIR/$RUN_LOGNAME"
+  env DEBUG=1\
+    LD_LIBRARY_PATH=$SYSTEMC/lib \
+    DYLD_LIBRARY_PATH=$SYSTEMC/lib \
+  $GDBP "$BUILD_DIR/$TARGET" -- $RUN_OPTS $ARGS 2>&1 \
+  | tee -a "$BUILD_DIR/$RUN_LOGNAME";
+
+  if [[ "$ROOT_DIR" != "$BUILD_DIR" ]]; then
+    filter-sclog < "$BUILD_DIR/$RUN_LOGNAME" >$RUN_LOGNAME;
+  else
+    filter-sclog < "$BUILD_DIR/$RUN_LOGNAME" >"$BUILD_DIR/run2.log";
+    rm "$BUILD_DIR/$RUN_LOGNAME"
+    mv "$BUILD_DIR/run2.log $RUN_LOGNAME"
+  fi
+fi
+if [[ -r $BUILD_LOGNAME ]]; then
+  echo "Info: Created $BUILD_LOGNAME"
+fi
+if [[ -r $RUN_LOGNAME ]]; then
+  echo "Info: Created $RUN_LOGNAME"
+fi
+
+#-------------------------------------------------------------------------------
+# The end
+#-------------------------------------------------------------------------------

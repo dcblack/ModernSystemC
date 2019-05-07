@@ -1,0 +1,2313 @@
+#!/usr/bin/perl
+eval 'exec perl -S $0 ${1+"$@"}'
+  if 0;#running_under_some_shell;
+
+# @(#)$Info: header - Variation of banner tool for horizontal banners. $ {{{
+#
+# @(#)$Email: <dcblack@hldwizard.com>. $
+require 5.0;
+use strict;
+use English;
+use FindBin qw($RealBin $RealScript);
+use FileHandle;
+STDOUT->autoflush(1);
+STDERR->autoflush(1);
+use vars qw($exe);
+
+############################################################################}}}
+## BEGIN DOCUMENTATION #####################################################{{{
+###############################################################################
+$exe = "$RealBin/$RealScript";
+exec "perldoc $exe" if "@ARGV" eq '--help';
+=pod
+
+=head1 NAME
+
+B<header> - Variation of banner tool for horizontal banners
+
+=head1 SYNOPSIS
+
+B<header> --help
+
+B<header> I<OPTIONS> I<MESSAGE>
+
+OPTIONS:
+
+ -b ------------- bold
+ -box ----------- put a box around the message
+ -c ------------- suitable for inclusion in C code
+ -ce[=COLS] ----- center text (optionally specify total width)
+ -char=CHAR ----- user CHAR to create large character
+ -cpp ----------- suitable for inclusion in C++ code
+ -fit ----------- minimum box or vbar width
+ -hbar[=CHAR] --- draw a horizontal bar above and below
+ -help ---------- display this help
+ -hx=MULT ------- horizontal width factor (fatter characters)
+ -lsep[=CHAR] --- draw a horizontal line between rows if multiline
+ -s</-s# -------- specify alternate character set
+ -hsep[=CHAR] --- draw a horizontal bar above
+ -sh ------------ suitable for inclusion in sh/bash/csh/perl/tcl scripts
+ -spacing=COLS -- add COLS columns of space between letters
+ -trim ---------- remove trailing whitespace (default leaves spaces)
+ -uc ------------ force to UPPERCASE
+ -v ------------- verbose mode
+ -vbar[=CHAR] --- draw a vertical bar on the left
+ -vx=MULT ------- vertical height factor (taller characters)
+ -wrap=MULT ----- wrap message to stay within margins
+
+
+=head1 DESCRIPTION
+
+Displays a large letter heading made of 7 line high by approximately 4 to 8 
+character wide characters.
+
+=head1 OPTIONS
+
+=over
+
+=item B<-b>
+
+Bold output
+
+=item B<-char>=I<CHAR>
+
+specify character for banner
+
+=item B<-ce>
+
+center
+
+=item B<-vx>=I<MULT>
+
+specify integer veritcal multiplier (default 1)
+
+=item B<--help>
+
+help - this text
+
+=item B<-hx>=I<MULT>
+
+specify integer horizontal multiplier (default 1)
+
+=item B<-sh>
+
+Output as comments with hash character (#) suitable for inclusion in bash/perl/tcl scripts.
+
+=item B<-wrap>=I<LEN>
+
+specify a length to wrap incoming text (default 0 => no wrapping)
+
+=back
+
+=head1 EXAMPLES
+
+ % header "My\nexample"
+ #     #       
+ ##   ##       
+ # # # #       
+ #  #  # #   # 
+ #     #  # #  
+ #     #   #   
+ #     #   #   
+
+ ##### #     #    #    #     # #####  #     ##### ###   
+ #      #   #    # #   ##   ## #    # #     #     ###   
+ #       # #    #   #  # # # # #    # #     #     ###   
+ #####    #    #     # #  #  # #####  #     #####  #    
+ #       # #   ####### #     # #      #     #           
+ #      #   #  #     # #     # #      #     #     ###   
+ ##### #     # #     # #     # #      ##### ##### ###   
+
+ %
+
+=head1 LICENSE
+
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=head1 AUTHOR
+
+David C Black <dcblack@hldwizard.com>
+
+=cut
+
+###############################################################################
+## END DOCUMENTATION ##########################################################
+############################################################################}}}
+
+our $tool = 'header';
+our $vers = '$Id: header 1171 2011-04-24 03:02:33Z dcblack $';
+our $auth = 'David Black <dblack@hldwizard.com>';
+
+our %OPT;  # command-line options
+our %BIG;  # character set data
+our $cs=0; # character set index
+our $beg = 1;
+our $end = 1;
+
+#-----------------------------------------------------------------------------
+# Determine terminal width
+#-----------------------------------------------------------------------------
+$OPT{-cols} = 78; # Default
+if (open STTY,"stty -a|") {
+  STTY->autoflush(1);
+  while (<STTY>) {
+    next unless m/columns\s+(\d+)/;
+    $OPT{-cols} = $1;
+    last;
+  }#endwhile <STTY>
+  close STTY;
+}#endif
+#-----------------------------------------------------------------------------
+# Defaults
+#-----------------------------------------------------------------------------
+$OPT{-fmt} = '';
+$OPT{-char} = '#';
+$OPT{-vx} = 1;
+$OPT{-hx} = 1;
+$OPT{-spacing} = 0;
+$OPT{-wrap} = 0; # no wrapping
+
+#-----------------------------------------------------------------------------
+# Process command line
+#-----------------------------------------------------------------------------
+die `perldoc $0` unless @ARGV;
+while ($ARGV[0] =~ /^-/) {
+  my $opt = shift(@ARGV);
+  #---------------------------------------------------------------------------
+  if ($opt eq '-') {
+    last;
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}b(old)?$}) {
+    $OPT{-bold} = 1;
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}hbar(?:=)?}) {
+    $OPT{-hbar} = $OPT{-char};
+    $OPT{-hbar} = $' if $opt =~ m{=};
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}hsep(?:=)?}) {
+    $OPT{-hsep} = 1;
+    $OPT{-hbar} = $OPT{-char};
+    $OPT{-hbar} = $' if $opt =~ m{=};
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}lsep(?:=)?}) {
+    $OPT{-lsep} = '-';
+    $OPT{-lsep} = $' if $opt =~ m{=};
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}trim}) {
+    $OPT{-trim} = 1;
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}vbar(?:=)?}) {
+    $OPT{-vbar} = $OPT{-char};
+    $OPT{-vbar} = $' if $opt =~ m{=};
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}sh$}) {
+    $OPT{-fmt}  = 'cpp';
+    $OPT{-cols} = 78;
+    $OPT{-char} = '#';
+    $OPT{-hbar} = '#';
+    $OPT{-vbar} = '#';
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}box(?:=)?}) {
+    $OPT{-box}  = $OPT{-char};
+    $OPT{-box}  = $' if $opt =~ m{=};
+    $OPT{-vbar} = $OPT{-box};
+    $OPT{-hbar} = $OPT{-box};
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}uc$}) {
+    $OPT{-uc}  = 1;
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}c$}) {
+    $OPT{-fmt}  = 'c';
+    $OPT{-cols} = 78;
+    $OPT{-char} = '#';
+    $OPT{-hbar} = '*';
+    $OPT{-vbar} = '*';
+    $OPT{-box}  = '*';
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}fit$}) {
+    $OPT{-fit} = 1;
+    $OPT{-cols} = 1;
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}(?:cpp|sv|vlog)$}) {
+    $OPT{-fmt} = 'cpp';
+    $OPT{-hbar} = '/';
+    $OPT{-vbar} = '//';
+  #---------------------------------------------------------------------------
+  } elsif ($opt eq '--') {
+    $OPT{-hbar} = '-';
+  #---------------------------------------------------------------------------
+  } elsif ($opt eq '--help') {
+    system("perldoc $0");
+    exit 0;
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{^-{1,2}ce(?:=)?}) {
+    if ($opt =~ m{=}) {
+      $OPT{-ce} = $';
+    } elsif ($ARGV[0] =~ /^\d+$/) {
+      $OPT{-ce} = shift(@ARGV);
+    } else {
+      $OPT{-ce} = $OPT{-cols};
+    }#endif
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{-{1,2}char(?:=)?}) {
+    if ($opt =~ m{=}) {
+      $OPT{-char} = $';
+    } else {
+      $OPT{-char} = shift @ARGV;
+    }#endif
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{-{1,2}cols(?:=)?}) {
+    if ($opt =~ m{=([1-9]\d*)$}) {
+      $OPT{-cols} = $1;
+    } else {
+      $OPT{-cols} = shift @ARGV;
+    }#endif
+  #---------------------------------------------------------------------------
+  } elsif ($opt eq '-v') {
+      $OPT{-v}++;
+  #---------------------------------------------------------------------------
+  } elsif ($opt eq '-vx') {
+    if ($opt =~ m{=}) {
+      $OPT{-vx} = $';
+    } else {
+      $OPT{-vx} = shift(@ARGV);
+    }#endif
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{-{1,2}s(\d+)$}) {
+    $cs=$1;
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{-{1,2}spacing(?:=)?}) {
+    if ($opt =~ m{=}) {
+      $OPT{-spacing} = $';
+    } else {
+      $OPT{-spacing} = shift(@ARGV);
+    }#endif
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{-{1,2}hx(?:=)?}) {
+    if ($opt =~ m{=}) {
+      $OPT{-hx} = $';
+    } else {
+      $OPT{-hx} = shift(@ARGV);
+    }#endif
+  #---------------------------------------------------------------------------
+  } elsif ($opt =~ m{-{1,2}wrap(?:=)?}) {
+    if ($opt =~ m{=}) {
+      $OPT{-wrap} = shift(@ARGV);
+    } else {
+      $OPT{-wrap} = $';
+    }#endif
+    print STDERR "WARNING: -wrap not fully implemented\n";
+  #---------------------------------------------------------------------------
+  } elsif ($opt eq '--test') {
+    system "$0 abcdef_";
+    system "$0 -b ghijklm";
+    system "$0 nopqrs-";
+    system "$0 tuvwxyz";
+    system "$0 ABCDEF";
+    system "$0 GHIJKLM";
+    system "$0 NOPQRS";
+    system "$0 TUVWXYZ";
+    system "$0 01234*";
+    system "$0 56789/";
+    system "$0 !@#$%^";
+    system "$0 &|_=()";
+    system "$0 <>[]{}";
+    system "$0 -uc  Data";
+    system "$0 -c   Data";
+    system "$0 -cpp Data";
+    system "$0 -sh  Data";
+    system "$0 -fit -cpp Data";
+    system "$0 -vbar Data";
+    system "$0 -hbar Data";
+    system "$0 -hsep Data";
+    system "$0 -box  Data";
+    system "$0 -ce=67  Data";
+    system "$0 -ce=68  Data";
+    system "$0 '|-80X07-|'";
+    exit 0;
+  #---------------------------------------------------------------------------
+  } else {
+    push @ARGV,$opt;
+    last;
+  }#endif
+  #---------------------------------------------------------------------------
+}#endwhile Processing command-line
+
+#-----------------------------------------------------------------------------
+# Read font
+#-----------------------------------------------------------------------------
+sub Read_font {
+  my ($c) = @_;
+  my ($n,$cn,$i);
+  while (<DATA>) {
+    chomp;
+    last if m/^__END__$/;
+    if (m/^__DATA__$/) {
+      $cs++;
+      next;
+    }#endif
+    s/^\|//;   # remove  leading |
+    s/\|[^\|]*$//; # remove trailing |
+    if ($c eq '++') {
+      $cn = chr($n);
+      s/#/$cn/g;
+    } else {
+      $cn = ' ' x length($c);
+      s/ /$cn/g;
+      s/#/$c/g;
+    }#endif
+    if (/^(\d+)/) {
+      $n = $1;
+      $i = 0;
+    } elsif (/^$/) {
+      $n = 0;
+      $i = 0;
+    } elsif ($n) {
+      $BIG{$cs,$n,$i++} = $_;
+    }#endif
+  }#endwhile
+  $cs=0; # revert to default
+}#endsub Read_font
+
+#-----------------------------------------------------------------------------
+# Process header
+#-----------------------------------------------------------------------------
+sub Header {
+  my ($msg) = @_;
+  my (@pos,@lin,$line,@wid,$PrtLine,$PrtText);
+  # Special character pairs
+  my $i;
+  substr($msg,$i,2) = chr(128) while ($i=index($msg,'-|-')) >= 0;
+  substr($msg,$i,2) = chr(129) while ($i=index($msg,'|-')) >= 0;
+  substr($msg,$i,2) = chr(130) while ($i=index($msg,'-|')) >= 0;
+  substr($msg,$i,2) = chr(131) while ($i=index($msg,'>|')) >= 0;
+  substr($msg,$i,2) = chr(132) while ($i=index($msg,'|<')) >= 0;
+  substr($msg,$i,2) = chr(133) while ($i=index($msg,'<-')) >= 0;
+  substr($msg,$i,2) = chr(134) while ($i=index($msg,'->')) >= 0;
+  substr($msg,$i,2) = chr(135) while ($i=index($msg,'[=')) >= 0;
+  substr($msg,$i,2) = chr(136) while ($i=index($msg,'=]')) >= 0;
+  substr($msg,$i,2) = chr(137) while ($i=index($msg,'-=')) >= 0;
+  for my $iLine (0..7) {
+    $PrtLine = '';
+    @lin = ();
+    @pos = ();
+    @wid = ();
+    my @msg = split('',$msg);
+    for (my $i=0; $i<=$#msg; ++$i) {
+      my $MsgChar = $msg[$i];
+      if (($msg[$i].$msg[$i+1]) =~ m{^\\(\d)$}) {
+        $cs = $1;
+        ++$i;
+        next;
+      }
+      my $BigChar = $BIG{$cs,ord($MsgChar),$iLine};
+      push @pos,length $PrtLine;
+      push @wid,length $BigChar; # not currently used
+      my $OutChar = '';
+      for my $PrtChar (split('',$BigChar)) {
+        $OutChar .= $PrtChar x $OPT{-hx};
+      }#endfor $PrtChar
+      $OutChar .= (' ' x $OPT{-spacing});
+      push @lin,$OutChar;
+    }#endfor $MsgChar
+    # expansion/justification here
+    $line = join('',@lin);
+    $line .= "\n";
+    $PrtText .= ($line x $OPT{-vx});
+  }#endfor $iLine
+  $PrtText =~ s/ +$//; # Remove trailing whitespace
+  $PrtText =~ s/^ *\n//; # Remove blank lines
+  $PrtText =~ s/\n\n$/\n/; # Remove extra blank line
+  return ($PrtText);
+}#endsub Header
+
+#-----------------------------------------------------------------------------
+# Center/widen header
+#-----------------------------------------------------------------------------
+sub Center {
+  my $msg = shift @_;
+  my (@msg,$max);
+  $max = $OPT{-cols};
+  $max = $OPT{-ce} if exists $OPT{-ce};
+  chomp($msg);
+  @msg = split(/\n/,$msg);
+  foreach my $line (@msg) {
+    $max = length($line) if length($line) > $max;
+  }#endforeach
+  foreach my $line (@msg) {
+    my $len = int(($max - length($line))/2);
+    if (exists $OPT{-ce}) {
+      $line = (' ' x $len) . $line . (' ' x $len);
+    } else {
+      $line .= (' ' x (2*$len));
+    }#endif
+  }#endforeach
+  return join("\n",@msg)."\n";
+}#endsub Center
+
+sub Box {
+  my $msg = shift @_;
+  my $box_width = 0;
+  my $box_pad = 2;
+  my $pad = ' ' x $box_pad;
+  my ($lc,$rc,$blank,$len);
+  for my $line (split("\n",$msg)) {
+    next unless $box_width < length $line;
+    $box_width = length $line;
+  }
+  if (exists $OPT{-box}) {
+    $lc = $OPT{-vbar};
+    $rc = $OPT{-box};
+    $blank = $lc.(' ' x ($box_width+2*$box_pad)).$rc;
+    $msg =~ s{^}{$lc$pad};
+    $msg =~ s{\n}{$pad$rc\n$lc$pad}g;
+    $msg =~ s{^}{$blank\n};
+    substr($msg,-length($lc)-$box_pad,length($lc)+$box_pad,''); # Remove last one
+    $msg .= $blank."\n";
+  } elsif (exists $OPT{-vbar}) {
+    $lc = $OPT{-vbar};
+    $msg =~ s{^}{$lc  };
+    $msg =~ s{\n}{\n$lc  }g;
+    $msg =~ s{^}{$lc\n};
+    substr($msg,-length($lc)-$box_pad,length($lc)+$box_pad,''); # Remove last one
+    $msg .= $lc."\n";
+  }#endif
+  if (exists $OPT{-hbar} or exists $OPT{-box}) {
+    $len = $OPT{-cols};
+    $len = $box_width if exists $OPT{-box} or $len < $box_width;
+    $len = $OPT{-ce} if exists $OPT{-ce} and $len < $OPT{-ce};
+    $len += length($lc.$pad.$pad.$rc) if exists $OPT{-box};
+    $len-- if $len%2 == 1;
+    $len += 2+length($OPT{-vbar}) if exists $OPT{-vbar};
+    # Top edge
+    substr($msg,0,0) = ($OPT{-hbar} x ($len-2))."\n" if $beg;
+    # Remove trailing whitespace
+    $msg =~ s/ +$//;
+    # Bottom or separating edge
+    if (not exists $OPT{-hsep}) {
+      if ($end ) {
+        $msg .= ($OPT{-hbar} x ($len-2))."\n";
+      } elsif (exists $OPT{-lsep}) {
+        $msg .= $OPT{-hbar}.($OPT{-lsep} x ($len-4)).$OPT{-hbar}."\n";
+      }#endif
+    }#endif
+  }#endif
+  return $msg;
+}#endsub Box
+
+sub Proportion {
+   my ($msg) = @_;
+   chomp($msg);
+   my @msg = split("\n",$msg);
+   my $max = 0;
+   foreach $msg (@msg) {
+      $max = length($msg) if length($msg) > $max;
+   }#endforeach
+   my $min = $max;
+   foreach $msg (@msg) {
+      $min = length($msg) if length($msg) < $min;
+   }#endforeach
+   for my $j (0..($min-1)) {
+      for my $i (0..$#msg) {
+      }#endfor
+   }#endfor
+   return join("\n",@msg)."\n";
+}#endsub Proportion
+
+#-----------------------------------------------------------------------------
+# Main
+#-----------------------------------------------------------------------------
+die "Missing banner message!\n" unless @ARGV;
+my $msgs = join(' ',@ARGV);
+if (exists $OPT{-uc}) {
+  $msgs = uc $msgs;
+  $msgs =~ s{\\N}{\\n}g;
+}
+my @msgs = ();
+for my $msg (split(/\\n/,$msgs)) {
+  if ($msg ne '' and $OPT{-wrap}) {
+    while ($msg ne '') {
+      my $pos = $OPT{-wrap};
+      if (substr($msg,0,$OPT{-wrap}) =~ m/.*\s/) {
+        $pos = length($&);
+        $pos = $OPT{-wrap} if $pos < 0.7 * $OPT{-wrap};
+      }#endif
+      push @msgs,substr($msg,0,$pos,'');
+    }#endwhile
+  } else {
+    push @msgs,$msg;
+  }#endif
+}#endfor
+Read_font($OPT{-char});
+print "\e[1m" if $OPT{-bold};
+my $final = '';
+my $row = 0;
+foreach my $msg (@msgs) {
+    $beg = ($row == 0);
+    $end = ($row == $#msgs);
+    $final .= sprintf("%s",&Box(&Center(&Header($msg))));
+    $row++;
+}
+if (exists $OPT{-trim}) {
+  $final =~ s{ +$}{}mg;
+}
+print $final;
+print "\e[0m" if $OPT{-bold};
+exit 0;
+
+########################################################################
+sub generate {
+    for my $n (ord(' ')..ord('~')) {
+        my $l = chr($n);
+        my $b = `/usr/bin/banner \\$l'/'`;
+        $b =~ s/\n/|\n/g;
+        $b =~ s/(\n........) +/$1/g;
+        $b =~ s/^(........) +/$1/;
+        $b =~ s/#\|//g;
+        $b =~ s/#/*/g;
+        $b =~ s/\|//;
+        printf "%d '%c'\n%s",$n,$l,$b;
+    }#endfor
+}#endsub generate
+
+__DATA__
+1 'CTRL-A'
+### |
+### |
+### |
+### |
+### |
+### |
+### |
+
+2 'CTRL-B'
+###### |
+#    # |
+#    # |
+#    # |
+#    # |
+#    # |
+###### |
+
+3 'CTRL-C'
+   #   |
+   #   |
+   #   |
+ ##### |
+  ###  |
+   #   |
+       |
+
+4 'CTRL-D'
+       |
+   #   |
+  ###  |
+ ##### |
+   #   |
+   #   |
+   #   |
+
+5 'CTRL-E'
+       |
+   #   |
+   ##  |
+###### |
+   ##  |
+   #   |
+       |
+
+6 'CTRL-F'
+       |
+   #   |
+  ##   |
+ ######|
+  ##   |
+   #   |
+       |
+
+7 'CTRL-G'
+   #   |
+   #   |
+   #   |
+   #   |
+   #   |
+   #   |
+   #   |
+
+8 'CTRL-H'
+       |
+       |
+       |
+#######|
+       |
+       |
+       |
+
+9 'CTRL-I'
+       |
+       |
+       |
+   ####|
+   #   |
+   #   |
+   #   |
+
+11 'CTRL-K'
+       |
+       |
+       |
+####   |
+   #   |
+   #   |
+   #   |
+
+12 'CTRL-L'
+   #   |
+   #   |
+   #   |
+   ####|
+       |
+       |
+       |
+
+14 'CTRL-N'
+   #   |
+   #   |
+   #   |
+####   |
+       |
+       |
+       |
+
+15 'CTRL-O'
+   #   |
+   #   |
+   #   |
+#######|
+   #   |
+   #   |
+   #   |
+
+32 ' '
+     |
+     |
+     |
+     |
+     |
+     |
+     |
+
+33 '!'
+###   |
+###   |
+###   |
+ #    |
+      |
+###   |
+###   |
+
+34 '"'
+### ### |
+### ### |
+ #   #  |
+        |
+        |
+        |
+        |
+
+35 '#'
+  # #   |
+  # #   |
+####### |
+  # #   |
+####### |
+  # #   |
+  # #   |
+
+36 '$'
+ #####  |
+#  #  # |
+#  #    |
+ #####  |
+   #  # |
+#  #  # |
+ #####  |
+
+37 '%'
+###   # |
+# #  #  |
+### #   |
+   #    |
+  # ### |
+ #  # # |
+#   ### |
+
+38 '&'
+  ##    |
+ #  #   |
+  ##    |
+ ###    |
+#   # # |
+#    #  |
+ ###  # |
+
+39 '''
+###  |
+###  |
+ #   |
+#    |
+     |
+     |
+     |
+
+40 '('
+  ##   |
+ #     |
+#      |
+#      |
+#      |
+ #     |
+  ##   |
+
+41 ')'
+##    |
+  #   |
+   #  |
+   #  |
+   #  |
+  #   |
+##    |
+
+42 '*'
+        |
+ #   #  |
+  # #   |
+####### |
+  # #   |
+ #   #  |
+        |
+
+43 '+'
+      |
+  #   |
+  #   |
+##### |
+  #   |
+  #   |
+      |
+
+44 ','
+    |
+    |
+    |
+### |
+### |
+ #  |
+#   |
+
+45 '-'
+       |
+       |
+       |
+#######|
+       |
+       |
+       |
+
+46 '.'
+     |
+     |
+     |
+     |
+     |
+ ##  |
+ ##  |
+
+47 '/'
+      #|
+     # |
+    #  |
+   #   |
+  #    |
+ #     |
+#      |
+
+48 '0'
+  ###   |
+ #   #  |
+#   # # |
+#  #  # |
+# #   # |
+ #   #  |
+  ###   |
+
+49 '1'
+  #   |
+ ##   |
+# #   |
+  #   |
+  #   |
+  #   |
+##### |
+
+50 '2'
+ ####  |
+#    # |
+     # |
+ ####  |
+#      |
+#      |
+###### |
+
+51 '3'
+ ####  |
+#    # |
+     # |
+ ####  |
+     # |
+#    # |
+ ####  |
+
+52 '4'
+#      |
+#   #  |
+#   #  |
+#   #  |
+###### |
+    #  |
+    #  |
+
+53 '5'
+###### |
+#      |
+#      |
+#####  |
+     # |
+#    # |
+ ####  |
+
+54 '6'
+ ####  |
+#    # |
+#      |
+#####  |
+#    # |
+#    # |
+ ####  |
+
+55 '7'
+####### |
+#    #  |
+    #   |
+   #    |
+  #     |
+  #     |
+  #     |
+
+56 '8'
+ ####  |
+#    # |
+#    # |
+ ####  |
+#    # |
+#    # |
+ ####  |
+
+57 '9'
+ ####  |
+#    # |
+#    # |
+ ##### |
+     # |
+#    # |
+ ####  |
+
+58 ':'
+ #    |
+###   |
+ #    |
+      |
+ #    |
+###   |
+ #    |
+
+59 ';'
+###   |
+###   |
+      |
+###   |
+###   |
+ #    |
+#     |
+
+60 '<'
+   #   |
+  #    |
+ #     |
+#      |
+ #     |
+  #    |
+   #   |
+
+61 '='
+       |
+       |
+#####  |
+       |
+#####  |
+       |
+       |
+
+62 '>'
+#     |
+ #    |
+  #   |
+   #  |
+  #   |
+ #    |
+#     |
+
+63 '?'
+ #####  |
+#     # |
+      # |
+   ###  |
+   #    |
+        |
+   #    |
+
+64 '@'
+ ####  |
+#    # |
+# ## # |
+# ## # |
+# ###  |
+#      |
+ ####  |
+
+65 'A'
+   #    |
+  # #   |
+ #   #  |
+#     # |
+####### |
+#     # |
+#     # |
+
+66 'B'
+#####  |
+#    # |
+#    # |
+#####  |
+#    # |
+#    # |
+#####  |
+
+67 'C'
+ ####  |
+#    # |
+#      |
+#      |
+#      |
+#    # |
+ ####  |
+
+68 'D'
+####   |
+#   #  |
+#    # |
+#    # |
+#    # |
+#   #  |
+####   |
+
+69 'E'
+##### |
+#     |
+#     |
+##### |
+#     |
+#     |
+##### |
+
+70 'F'
+##### |
+#     |
+#     |
+##### |
+#     |
+#     |
+#     |
+
+71 'G'
+ ####  |
+#    # |
+#      |
+#  ### |
+#    # |
+#    # |
+ ####  |
+
+72 'H'
+#    # |
+#    # |
+#    # |
+###### |
+#    # |
+#    # |
+#    # |
+
+73 'I'
+### |
+ #  |
+ #  |
+ #  |
+ #  |
+ #  |
+### |
+
+74 'J'
+     # |
+     # |
+     # |
+     # |
+#    # |
+#    # |
+ ####  |
+
+75 'K'
+#    #  |
+#   #   |
+#  #    |
+###     |
+#  #    |
+#   #   |
+#    #  |
+
+76 'L'
+#     |
+#     |
+#     |
+#     |
+#     |
+#     |
+##### |
+
+77 'M'
+#     # |
+##   ## |
+# # # # |
+#  #  # |
+#     # |
+#     # |
+#     # |
+
+78 'N'
+#     # |
+##    # |
+# #   # |
+#  #  # |
+#   # # |
+#    ## |
+#     # |
+
+79 'O'
+ ####  |
+#    # |
+#    # |
+#    # |
+#    # |
+#    # |
+ ####  |
+
+80 'P'
+#####  |
+#    # |
+#    # |
+#####  |
+#      |
+#      |
+#      |
+
+81 'Q'
+ ####  |
+#    # |
+#    # |
+#    # |
+#  # # |
+#   #  |
+ ### # |
+
+82 'R'
+#####  |
+#    # |
+#    # |
+#####  |
+#  #   |
+#   #  |
+#    # |
+
+83 'S'
+ ####  |
+#    # |
+#      |
+ ####  |
+     # |
+#    # |
+ ####  |
+
+84 'T'
+####### |
+   #    |
+   #    |
+   #    |
+   #    |
+   #    |
+   #    |
+
+85 'U'
+#    # |
+#    # |
+#    # |
+#    # |
+#    # |
+#    # |
+ ####  |
+
+86 'V'
+#     # |
+#     # |
+#     # |
+#     # |
+ #   #  |
+  # #   |
+   #    |
+
+87 'W'
+#     # |
+#  #  # |
+#  #  # |
+#  #  # |
+#  #  # |
+#  #  # |
+ ## ##  |
+
+88 'X'
+#     # |
+ #   #  |
+  # #   |
+   #    |
+  # #   |
+ #   #  |
+#     # |
+
+89 'Y'
+#     # |
+ #   #  |
+  # #   |
+   #    |
+   #    |
+   #    |
+   #    |
+
+90 'Z'
+####### |
+     #  |
+    #   |
+   #    |
+  #     |
+ #      |
+####### |
+
+91 '['
+ ##### |
+ #     |
+ #     |
+ #     |
+ #     |
+ #     |
+ ##### |
+
+92 '\'
+#       |
+ #      |
+  #     |
+   #    |
+    #   |
+     #  |
+      # |
+
+93 ']'
+ #####  |
+     #  |
+     #  |
+     #  |
+     #  |
+     #  |
+ #####  |
+
+94 '^'
+  #    |
+ # #   |
+#   #  |
+       |
+       |
+       |
+       |
+
+95 '_'
+       |
+       |
+       |
+       |
+       |
+       |
+###### 
+
+96 '`'
+###  |
+###  |
+ #   |
+  #  |
+     |
+     |
+     |
+
+97 'a'
+      |
+      |
+      |
+ ###  |
+#   # |
+#  ## |
+ ## # |
+
+98 'b'
+       |
+#      |
+#      |
+#      |
+#####  |
+#    # |
+#####  |
+
+99 'c'
+       |
+       |
+       |
+ ####  |
+#      |
+#      |
+ ####  |
+
+100 'd'
+       |
+    #  |
+    #  |
+    #  |
+ ####  |
+#   #  |
+ ####  |
+
+101 'e'
+       |
+       |
+       |
+ ###   |
+#####  |
+#      |
+ ###   |
+
+102 'f'
+       |
+  ###  |
+ #   # |
+####   |
+ #     |
+ #     |
+ #     |
+
+103 'g'
+      |
+      |
+ ###  |
+#   # |
+ #### |
+    # |
+ ###  |
+
+104 'h'
+     |
+#    |
+#    |
+#    |
+###  |
+#  # |
+#  # |
+
+105 'i'
+    |
+    |
+ #  |
+    |
+##  |
+ #  |
+### |
+
+106 'j'
+     |
+   # |
+     |
+   # |
+   # |
+#  # |
+ ##  |
+
+107 'k'
+     |
+#    |
+#    |
+#    |
+#  # |
+###  |
+#  # |
+
+108 'l'
+     |
+##   |
+ #   |
+ #   |
+ #   |
+ #   |
+###  |
+
+109 'm'
+        |
+        |
+        |
+### ##  |
+#  #  # |
+#  #  # |
+#  #  # |
+
+110 'n'
+      |
+      |
+      |
+####  |
+#   # |
+#   # |
+#   # |
+
+111 'o'
+       |
+       |
+       |
+ ####  |
+#    # |
+#    # |
+ ####  |
+
+112 'p'
+      |
+      |
+      |
+####  |
+#   # |
+####  |
+#     |
+
+113 'q'
+       |
+       |
+ ####  |
+#   #  |
+ ####  |
+    ## |
+    #  |
+
+114 'r'
+       |
+       |
+       |
+# ###  |
+##     |
+#      |
+#      |
+
+115 's'
+       |
+       |
+ ####  |
+#      |
+ ####  |
+     # |
+ ####  |
+
+116 't'
+     |
+ #   |
+ #   |
+###  |
+ #   |
+ # # |
+  #  |
+
+117 'u'
+       |
+       |
+       |
+#    # |
+#    # |
+#    # |
+ ##### |
+
+118 'v'
+       |
+       |
+       |
+#    # |
+#    # |
+ #  #  |
+  ##   |
+
+119 'w'
+      |
+      |
+      |
+#   # |
+# # # |
+## ## |
+#   # |
+
+120 'x'
+       |
+       |
+       |
+##  ## |
+  ##   |
+  ##   |
+##  ## |
+
+121 'y'
+      |
+      |
+      |
+#   # |
+ # #  |
+  #   |
+  #   |
+
+122 'z'
+       |
+       |
+       |
+###### |
+   ##  |
+ ##    |
+###### |
+
+123 '{'
+  ###   |
+ #      |
+ #      |
+##      |
+ #      |
+ #      |
+  ###   |
+
+124 '|'
+  #   |
+  #   |
+  #   |
+      |
+  #   |
+  #   |
+  #   |
+
+125 '}'
+###   |
+   #  |
+   #  |
+   ## |
+   #  |
+   #  |
+###   |
+
+126 '~'
+        |
+        |
+        |
+ ###  # |
+#  ###  |
+        |
+        |
+
+128 '-|-'
+    #    |
+    #    |
+    #    |
+#########|
+    #    |
+    #    |
+    #    |
+
+129 '|-'
+#    |
+#    |
+#    |
+#####|
+#    |
+#    |
+#    |
+
+130 '-|'
+    #|
+    #|
+    #|
+#####|
+    #|
+    #|
+    #|
+
+131 '>|'
+ #   #|
+  #  #|
+   # #|
+######|
+   # #|
+  #  #|
+ #   #|
+
+132 '|<'
+#   # |
+#  #  |
+# #   |
+######|
+# #   |
+#  #  |
+#   # |
+
+
+133 '<-'
+   #  |
+  #   |
+ #    |
+######|
+ #    |
+  #   |
+   #  |
+
+134 '->'
+  #   |
+   #  |
+    # |
+######|
+    # |
+   #  |
+  #   |
+
+135 '[='
+######|
+#     |
+#     |
+#     |
+#     |
+#     |
+######|
+
+136 '=]'
+######|
+     #|
+     #|
+     #|
+     #|
+     #|
+######|
+
+137 '-='
+######|
+      |
+      |
+      |
+      |
+      |
+######|
+
+__DATA__
+32 ' '
+|    |
+|    |
+|    |
+|    |
+|    |
+
+33 '!'
+|#  |
+|#  |
+|#  |
+|   |
+|#  |
+
+34 '"'
+|# #  |
+|# #  |
+|     |
+|     |
+|     |
+
+35 '#'
+| # #  |
+|##### |
+| # #  |
+|##### |
+| # #  |
+
+36 '$'
+| #### |
+|# #   |
+| ###  |
+|  # # |
+|####  |
+
+37 '%'
+|##  # |
+|## #  |
+|  #   |
+| # ## |
+|#  ## |
+
+39 '''
+| #  |
+|#   |
+|    |
+|    |
+|    |
+
+40 '('
+| #  |
+|#   |
+|#   |
+|#   |
+| #  |
+
+41 ')'
+|#   |
+| #  |
+| #  |
+| #  |
+|#   |
+
+42 '*'
+|      |
+| # #  |
+|##### |
+| # #  |
+|      |
+
+43 '+'
+|      |
+|  #   |
+|##### |
+|  #   |
+|      |
+
+44 ','
+|    |
+|    |
+|##  |
+|##  |
+|#   |
+
+45 '-'
+|     |
+|     |
+|#### |
+|     |
+|     |
+
+46 '.'
+|    |
+|    |
+|    |
+|##  |
+|##  |
+
+
+47 '/'
+|    # |
+|   #  |
+|  #   |
+| #    |
+|#     |
+
+
+48 '0'
+| ###  |
+|#  ## |
+|# # # |
+|##  # |
+| ###  |
+
+49 '1'
+| #  |
+|##  |
+| #  |
+| #  |
+|### |
+
+50 '2'
+|###  |
+|   # |
+|###  |
+|#    |
+|#### |
+
+51 '3'
+|###  |
+|   # |
+| ##  |
+|   # |
+|###  |
+
+52 '4'
+|# # |
+|# # |
+|### |
+|  # |
+|  # |
+
+53 '5'
+|###  |
+|#    |
+|###  |
+|   # |
+|###  |
+
+54 '6'
+| ##  |
+|#    |
+|###  |
+|#  # |
+| ##  |
+
+55 '7'
+|#### |
+|   # |
+|  #  |
+| #   |
+| #   |
+
+56 '8'
+| ###  |
+|#   # |
+| ###  |
+|#   # |
+| ###  |
+
+57 '9'
+| ###  |
+|#  ## |
+|# # # |
+|##  # |
+| ###  |
+
+58 ':'
+|   |
+|#  |
+|   |
+|#  |
+|   |
+
+59 ';'
+|   |
+|#  |
+|   |
+|#  |
+|#  |
+
+60 '<'
+|  # |
+| #  |
+|#   |
+| #  |
+|  # |
+
+61 '='
+|     |
+|#### |
+|     |
+|#### |
+|     |
+
+62 '>'
+|#   |
+| #  |
+|  # |
+| #  |
+|#   |
+
+63 '?'
+| ###   |
+|#   #  |
+|   #   |
+|       |
+|  #    |
+
+65 'A'
+| ##  |
+|#  # |
+|#### |
+|#  # |
+|#  # |
+
+66 'B'
+|###  |
+|#  # |
+|###  |
+|#  # |
+|###  |
+
+67 'C'
+| ## |
+|#   |
+|#   |
+|#   |
+| ## |
+
+68 'D'
+|##  |
+|# # |
+|# # |
+|# # |
+|##  |
+
+69 'E'
+|### |
+|#   |
+|### |
+|#   |
+|### |
+
+70 'F'
+|### |
+|#   |
+|### |
+|#   |
+|#   |
+
+71 'G'
+| ### |
+|#    |
+|# ## |
+|#  # |
+| ##  |
+
+72 'H'
+|#  # |
+|#  # |
+|#### |
+|#  # |
+|#  # |
+
+73 'I'
+|### |
+| #  |
+| #  |
+| #  |
+|### |
+
+74 'J'
+|  # |
+|  # |
+|  # |
+|# # |
+| #  |
+
+75 'K'
+|#  # |
+|# #  |
+|##   |
+|# #  |
+|#  # |
+
+76 'L'
+|#   |
+|#   |
+|#   |
+|#   |
+|### |
+
+77 'M'
+|#   # |
+|## ## |
+|# # # |
+|#   # |
+|#   # |
+
+78 'N'
+|#  # |
+|## # |
+|# ## |
+|# ## |
+|#  # |
+
+79 'O'
+| ##  |
+|#  # |
+|#  # |
+|#  # |
+| ##  |
+
+80 'P'
+|###  |
+|#  # |
+|###  |
+|#    |
+|#    |
+
+81 'Q'
+| ##   |
+|#  #  |
+|#  #  |
+|# ##  |
+| ## # |
+
+82 'R'
+|###  |
+|#  # |
+|###  |
+|#  # |
+|#  # |
+
+83 'S'
+| ### |
+|#    |
+| ##  |
+|   # |
+|###  |
+
+84 'T'
+|### |
+| #  |
+| #  |
+| #  |
+| #  |
+
+85 'U'
+|#  # |
+|#  # |
+|#  # |
+|#  # |
+| ##  |
+
+86 'V'
+|#   # |
+|#   # |
+|#   # |
+| # #  |
+|  #   |
+
+87 'W'
+|#   # |
+|#   # |
+|# # # |
+|## ## |
+|#   # |
+
+88 'X'
+|#   # |
+| # #  |
+|  #   |
+| # #  |
+|#   # |
+
+89 'Y'
+|#   # |
+| # #  |
+|  #   |
+|  #   |
+|  #   |
+
+90 'Z'
+|### |
+|  # |
+| #  |
+|#   |
+|### |
+
+95 '_'
+|   |
+|   |
+|   |
+|   |
+|###|
+
+97 'a'
+|     |
+|     |
+| ### |
+|#  # |
+| ### |
+
+98 'b'
+|#   |
+|#   |
+|##  |
+|# # |
+|##  |
+
+99 'c'
+|    |
+| ## |
+|#   |
+|#   |
+| ## |
+
+100 'd'
+|  # |
+|  # |
+| ## |
+|# # |
+| ## |
+
+101 'e'
+| ##  |
+|#  # |
+|#### |
+|#    |
+| ### |
+
+102 'f'
+|  ## |
+| #   |
+|###  |
+| #   |
+|###  |
+
+103 'g'
+|    |
+| ## |
+|# # |
+| ## |
+|##  |
+
+104 'h'
+|#    |
+|#    |
+|# #  |
+|## # |
+|#  # |
+
+105 'i'
+| #  |
+|    |
+|##  |
+| #  |
+|### |
+
+106 'j'
+|  # |
+|    |
+|  # |
+|# # |
+| #  |
+
+107 'k'
+|#   |
+|#   |
+|# # |
+|##  |
+|# # |
+
+108  'l'
+|##  |
+| #  |
+| #  |
+| #  |
+|### |
+
+109 'm'
+|        |
+|# # ##  |
+|## #  # |
+|#  #  # |
+|#  #  # |
+
+110 'n'
+|     |
+|# #  |
+|## # |
+|#  # |
+|#  # |
+
+111 'o'
+|     |
+| ##  |
+|#  # |
+|#  # |
+| ##  |
+
+112 'p'
+|     |
+|###  |
+|#  # |
+|###  |
+|#    |
+
+113 'q'
+|     |
+| ### |
+|#  # |
+| ### |
+|   # |
+
+114 'r'
+|     |
+|# #  |
+|## # |
+|#    |
+|#    |
+
+115 's'
+|     |
+| ### |
+|##   |
+|  ## |
+|###  |
+
+116 't'
+| #   |
+|###  |
+| #   |
+| # # |
+|  #  |
+
+117 'u'
+|      |
+|      |
+|#   # |
+|#   # |
+| ###  |
+
+118 'v'
+|      |
+|      |
+|#   # |
+| # #  |
+|  #   |
+
+119 'w'
+|        |
+|        |
+|#     # |
+| # # #  |
+|  # #   |
+
+120 'x'
+|     |
+|     |
+|#  # |
+| ##  |
+|#  # |
+
+121 'y'
+|     |
+|#  # |
+| ##  |
+| #   |
+|#    |
+
+122 'z'
+|     |
+|#### |
+|  #  |
+| #   |
+|#### |
+
+__DATA__
+
+65 'A'
+|     _     |6
+|    / \    |5
+|   / ^ \   |4
+|  / /_\ \  |3
+| / /---\ \ |2
+|/_/     \_\|1
+
+66 'B'
+| ____  |6
+||  _ \ |5
+|| |_) )|4
+||  _ < |3
+|| |_) )|2
+||____/ |1
+ 
+67 'C'
+|  _____ |6
+| / ___ \|5
+|( /   \/|4
+|( |     |3
+|( \___/\|2
+| \_____/|1
+ 
+68 'D'
+| ____  |6
+||  _ \ |5
+|| | \ )|4
+|| | | )|3
+|| |_/ )|2
+||____/ |1
+ 
+69 'E'
+| _____ |6
+||  ___/|5
+|| |___ |4
+||  __/ |3
+|| |____|2
+||_____/|1
+ 
+73 'I'
+|  _  |6
+| / / |5
+| | | |4
+| | | |3
+| | | |2
+| /_/ |1
+
+80 'P'
+| ____  |6
+||  _ \ |5
+|| |_) ||4
+||  __/ |3
+|| |    |2
+||_|    |1
+ 
+83 'S'
+| _____ |6
+|/  ___/|5
+|| (__  |4
+|\___ \ |3
+| ___) ||2
+|\____/ |1
+
+84 'T'
+| _______|6
+|/__  __/|5
+|   | |  |4
+|   | |  |3
+|   | |  |2
+|   |_|  |1
+
+__END__

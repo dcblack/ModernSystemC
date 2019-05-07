@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+
+
+our $sep='_';
+our $inc = 0;
+if( $ARGV[0] eq '-h' ) {
+  system("perldoc $0");
+  exit 0;
+} elsif( $ARGV[0] eq '-n' ) {
+  $inc = 1;
+  $sep = '-';
+  shift @ARGV;
+} else {
+  $sep  = shift(@ARGV) if @ARGV and length($ARGV[0]) == 1;
+}
+our $cols = $2 if qx(stty -a)=~m{(\d+) rows; (\d+) columns;};
+    $cols = $ENV{'COLUMNS'} unless $cols;
+    $cols = shift(@ARGV) if @ARGV;
+    $cols = 80 unless $cols;
+our $rule = sprintf(qq{%s},($sep x $cols));
+if( $inc ) {
+  for( my $i=0; $i<length($rule); $i+=5 ) {
+    if( $i%10 == 0 ) {
+      substr($rule,$i,1) = ($i/10)%10;
+    } else {
+      substr($rule,$i,1) = ':';
+    }
+  }
+}
+print $rule,"\n";
+
+exit 0;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+ruler - draw a horizontal line across the terminal
+
+=head1 SYNOPSIS
+
+B<ruler> [B<-n>] [CHAR [WIDTH]]
+
+B<ruler -h>
+
+=head1 DESCRIPTION
+
+Draws a single horizontal line of hyphen characters.
+
+If not specified, length of the line is determined by querying the terminal using E<stty>.
+It may be overridden using the environment variable COLUMNS or specifying a value
+as an argument on the command-line.
+If all else fails, the width defaults to 80.
+
+The character used to create the ruler is a hyphen '-' by default; however, it may be
+overridden by specifying the character 
+as an argument on the command-line.
+
+Finally, an B<-n> option is provided to allow insertion of column information. This makes
+it easy to determine the width of the terminal or a horizontal position visually.
+
+=cut
+

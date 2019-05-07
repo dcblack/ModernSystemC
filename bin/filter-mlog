@@ -1,0 +1,9 @@
+#!/usr/bin/perl -pi
+#
+# Cleanup make.log file
+
+$root = $ENV{'PROJ_ROOT'};
+
+if( s{$root/}{} ) {
+  s{: }{:\n};
+}

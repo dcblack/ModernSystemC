@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+#
+# $Info: Eliminate blank lines around SC_REPORT_INFO output.$
+
+require v5.6;
+use strict;
+use English;
+use FileHandle;
+use Cwd;
+STDOUT->autoflush(1);
+STDERR->autoflush(1);
+
+my $root = '';
+$root = $ENV{'PROJ_ROOT'} if exists $ENV{'PROJ_ROOT'};
+my $prev="";
+while(<>) {
+  s{$root/}{}; # Remove root of file pathnames to leave relative name
+  if (!m/^$/) {
+    if (not ($prev =~ m/^$/ and $_ =~ m/^Info:/)) {
+      print $prev;
+    }
+    $prev = $_;
+  } else {
+    print $prev;
+    $prev = $_ if $. > 1;
+  }
+}
+print if $prev ne "";
