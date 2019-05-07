@@ -15,8 +15,8 @@ struct Duplicator_module : sc_core::sc_module
   sc_core::sc_export<sc_core::sc_fifo_in_if<RawData_t>> out1_xport { "out1_xport" };
   sc_core::sc_export<sc_core::sc_fifo_in_if<RawData_t>> out2_xport { "out2_xport" };
 private:
-  sc_core::sc_fifo<RawData_t> fifo1 { "fifo1", FIFO_DEPTH };
-  sc_core::sc_fifo<RawData_t> fifo2 { "fifo2", FIFO_DEPTH };
+  sc_core::sc_fifo<RawData_t>                           out1_fifo  { "out1_fifo", FIFO_DEPTH };
+  sc_core::sc_fifo<RawData_t>                           out2_fifo  { "out2_fifo", FIFO_DEPTH };
   void duplicator_thread( void );
 };
 #endif/*DUPLICATOR_HPP*/

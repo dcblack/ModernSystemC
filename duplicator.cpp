@@ -14,8 +14,8 @@ Duplicator_module::Duplicator_module( sc_module_name instance ) //< Constructor
   SC_HAS_PROCESS( Duplicator_module );
   SC_THREAD( duplicator_thread );
   // Connectivity
-  out1_xport.bind( fifo1 );
-  out2_xport.bind( fifo2 );
+  out1_xport.bind( out1_fifo );
+  out2_xport.bind( out2_fifo );
 }
 
 //..............................................................................
@@ -28,7 +28,7 @@ void Duplicator_module::duplicator_thread( void )
   for(;;) {
     v = input_port->read();
     INFO( DEBUG, "Duplicating " << v );
-    fifo1.write( v );
-    fifo2.write( v );
+    out1_fifo.write( v );
+    out2_fifo.write( v );
   }
 }
