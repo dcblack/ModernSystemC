@@ -18,6 +18,7 @@
 #include "duplicator.hpp"
 #include "processing.hpp"
 #include "checker.hpp"
+#include "sc_cxx11.hpp"
 using namespace sc_core;
 
 //..............................................................................
@@ -30,7 +31,7 @@ Top_module::Top_module( sc_module_name instance ) //< Constructor
   dupl    = std::make_unique<Duplicator_module> ( "dupl"    );
   process = std::make_unique<Processing_module> ( "process" );
   check   = std::make_unique<Checker_module>    ( "check"   );
-  clock   = std::make_unique<sc_clock>          ( "clock"   );
+  clock   = std::make_unique<sc_clock>          ( "clock", 10_ns );
   /**
    * Connect
    */
