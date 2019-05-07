@@ -7,9 +7,9 @@
 #define PROCESSING_HPP
 #include "common.hpp"
 #include <systemc>
-SC_MODULE( Processing_module )
+struct Processing_module : sc_core::sc_module
 {
-  SC_CTOR( Processing_module );
+  Processing_module( sc_core::sc_module_name instance );
   ~Processing_module( void );
   sc_core::sc_fifo_in <RawData_t>    input_port  { "input_port"  };
   sc_core::sc_out<FixedPt_t>         output_port { "output_port" };

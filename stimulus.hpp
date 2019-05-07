@@ -6,9 +6,9 @@
 #define STIMULUS_HPP
 #include "common.hpp"
 #include <systemc>
-SC_MODULE( Stimulus_module )
+struct Stimulus_module : sc_core::sc_module
 {
-  SC_CTOR( Stimulus_module );
+  Stimulus_module( sc_core::sc_module_name instance );
   ~Stimulus_module( void );
   sc_core::sc_fifo_out<RawData_t>  rawout_port { "rawout_port" };
 private:

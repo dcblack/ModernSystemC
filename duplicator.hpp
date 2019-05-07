@@ -7,9 +7,9 @@
 #define DUPLICATOR_HPP
 #include "common.hpp"
 #include <systemc>
-SC_MODULE( Duplicator_module )
+struct Duplicator_module : sc_core::sc_module
 {
-  SC_CTOR( Duplicator_module );
+  Duplicator_module( sc_core::sc_module_name instance );
   ~Duplicator_module( void );
   sc_core::sc_fifo_in <RawData_t>                       input_port { "input_port" };
   sc_core::sc_export<sc_core::sc_fifo_in_if<RawData_t>> out1_xport { "out1_xport" };

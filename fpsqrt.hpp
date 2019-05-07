@@ -16,7 +16,8 @@
 #define FSQRT_HPP
 #include "common.hpp"
 #include <systemc>
-struct FP {
+struct FP
+{
 
 /**
  * FixedPt_t fpsqrt( FixedPt_t v );

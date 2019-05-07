@@ -10,9 +10,9 @@ struct Stimulus_module;
 struct Duplicator_module;
 struct Processing_module;
 struct Checker_module;
-SC_MODULE( Top_module )
+struct Top_module : sc_core::sc_module
 {
-  SC_CTOR( Top_module );
+  Top_module( sc_core::sc_module_name instance );
   ~Top_module( void );
   std::unique_ptr<Stimulus_module>   stim;
   std::unique_ptr<Duplicator_module> dupl;
