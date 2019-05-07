@@ -12,9 +12,9 @@
 
 cmake_minimum_required( VERSION 3.11 )
 
-project(      magnitude
+project(      modern
   VERSION     0.1 # n.n[.n[.n]]
-  DESCRIPTION "Compute magnitude of x/y/z coordinates from sensors."
+  DESCRIPTION "Compute magnitude of x/y/z coordinates from sensors using modern SystemC and C++."
   LANGUAGES   CXX C
   )
 
@@ -22,9 +22,9 @@ set( default_build_type "Debug" )
 include( /apps/cmake/SystemC.cmake )
 add_compile_definitions( SC_INCLUDE_FX SC_INCLUDE_DYNAMIC_PROCESSES )
 
-add_executable( magnitude )
-target_include_directories( magnitude PRIVATE . )
-target_sources( magnitude PRIVATE
+add_executable( modern )
+target_include_directories( modern PRIVATE . )
+target_sources( modern PRIVATE
   coord.cpp
   checker.cpp
   duplicator.cpp
