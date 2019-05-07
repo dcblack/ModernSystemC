@@ -11,5 +11,4 @@
 #define INT_WIDTH 16
 using RawData_t = Coordinate;
 using FixedPt_t = sc_dt::sc_fixed<32,INT_WIDTH>; // +/- 32767.9999
-extern size_t mismatches;
 #endif/*COMMON_HPP*/

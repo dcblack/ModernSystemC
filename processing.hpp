@@ -6,7 +6,6 @@
 #ifndef PROCESSING_HPP
 #define PROCESSING_HPP
 #include "common.hpp"
-#include <systemc>
 struct Processing_module : sc_core::sc_module
 {
   Processing_module( sc_core::sc_module_name instance );

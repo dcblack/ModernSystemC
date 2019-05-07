@@ -13,7 +13,6 @@ namespace {
 }
 std::map<std::string,std::string> cmdline;
 std::ostringstream mout;
-size_t mismatches = 0;
 int sc_main( int argc, char* argv[] )
 {
   using namespace sc_core;

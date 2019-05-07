@@ -1,17 +1,6 @@
 /**
  * @file  top.cpp
  * @brief Top-level interconnect implementation
- *
- *                           Duplicator   Processing                     Checker
- * Stimulus                  _module      _module          sc_buffer     _module
- * _module      sc_fifo      .------.     .-----------.     .------.     .-------.
- * .------.     .------.     |     1|o--[]|> process >|[]--o|result|o--[]|>      |
- * | stim |[]--o| raw  |o--[]| dupl |     '-----^-----'     'buffer'     | check |
- * '------'     '-fifo-'     |     2|o--.       |                        |       |
- *                           '------'   |  clk -'                        |       |
- *                                      |                       raw_in   |       |
- *                                      '------------------------------[]|>      |
- *                                                                       '-------'
  */
 #include "top.hpp"
 #include "stimulus.hpp"
