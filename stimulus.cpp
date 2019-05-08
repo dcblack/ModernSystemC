@@ -7,7 +7,7 @@
 #include <random>
 using namespace sc_core;
 namespace {
-  char const * const MSGID{ "/Doulos/Example/Magnitude/Stimulus_module" };
+  char const * const MSGID{ "/Doulos/Example/Modern/Stimulus_module" };
 }
 
 //..............................................................................

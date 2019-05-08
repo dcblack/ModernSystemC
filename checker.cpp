@@ -9,7 +9,7 @@
 #include "report.hpp"
 using namespace sc_core;
 namespace {
-  char const * const MSGID{ "/Doulos/Example/Magnitude/Checker_module" };
+  char const * const MSGID{ "/Doulos/Example/Modern/Checker_module" };
 }
 
 //..............................................................................

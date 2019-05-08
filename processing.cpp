@@ -8,7 +8,7 @@
 #endif
 using namespace sc_core;
 namespace {
-  char const * const MSGID{ "/Doulos/Example/Magnitude/Processing_module" };
+  char const * const MSGID{ "/Doulos/Example/Modern/Processing_module" };
 }
 
 //..............................................................................

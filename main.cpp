@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace {
-  char const * const MSGID{ "/Doulos/Example/Magnitude/main" };
+  char const * const MSGID{ "/Doulos/Example/Modern/main" };
 }
 std::map<std::string,std::string> cmdline;
 std::ostringstream mout;
