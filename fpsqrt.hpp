@@ -1,15 +1,13 @@
 /**
  * @file fpsqrt.hpp
  *
- * Computing the square root of an integer or a fixed point into a 
- * fixed point integer. A fixed point is a 32 bit value with the comma between
- * the bits 15 and 16, where bit 0 is the less significant bit of the value. 
+ * Computing the square root of a fixed point integer.
  * 
- * The algorithms can be easily extended to 64bit integers, or different 
- * fixed point comma positions. 
+ * The algorithms can be easily extended to other formats.
  * 
  * Algorithm and code Author: Christophe Meessen 1993. 
  * Initially published in: usenet comp.lang.c, Thu, 28 Jan 1993 08:35:23 GMT, 
+ * Modified to use SystemC types by David Black 2019.
  * Subject: Fixed point sqrt ; by Meessen Christophe
  */
 #ifndef FSQRT_HPP
