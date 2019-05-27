@@ -13,7 +13,7 @@
 cmake_minimum_required( VERSION 3.11 )
 
 project(      modern
-  VERSION     0.1 # n.n[.n[.n]]
+  VERSION     0.2 # n.n[.n[.n]]
   DESCRIPTION "Compute magnitude of x/y/z coordinates from sensors using modern SystemC and C++."
   LANGUAGES   CXX C
   )
@@ -40,6 +40,7 @@ target_sources( modern PRIVATE
 find_package( Doxygen REQUIRED dot )
 if( DOXYGEN_FOUND )
   set( DOXYGEN_OUTPUT_DIRECTORY ../doc )
+  set( DOXYGEN_IMAGE_PATH .. )
   set( DOXYGEN_EXTRACT_ALL yes )
   set( DOXYGEN_EXTRACT_PRIVATE yes )
   set( DOXYGEN_EXTRACT_STATIC yes )
