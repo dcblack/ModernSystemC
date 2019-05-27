@@ -26,6 +26,14 @@ Verification features include:
 - Objection mechanism to determine end of simulation
 - Checking error counts for PASS/FAIL determination
 
+#### Challenge
+
+Identify as many features from the preceding as you are able. If you are familiar with C++98/03, but unfamiliar with C++11 and beyond, I highly recommend getting a book on the topic. The following are some favorites in my library in no particular order:
+
+- [C++ Rocks by Alex Korban](https://cpprocks.com)
+- [Effective Modern **C**++: 42 Specific Ways to Improve Your Use of **C**++**11** and **C**++14 by Scott Meyers](https://www.amazon.com/gp/product/B00PGCMGDQ/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1)
+- [The C++ Programing Language by Bjarne Stroustrup](https://read.amazon.com/kp/embed?asin=B00DUW4BMS&preview=newtab&linkCode=kpe&ref_=cm_sw_r_kb_dp_wKg7CbZR8QJNX)
+
 ## Block diagram
 
 ![Block_Diagram](Block_Diagram.jpg)
@@ -59,6 +67,18 @@ fatal messages were issued during simulation.
 
 This project is based on using the `cmake` tool (See <https://cmake.org>)
 and creation of all build artifacts in the `build/` subdirectory.
+
+#### Prerequisites
+
+This project requires a moder C++ compiler such as g++ (part of GCC) or clang++ (part of llvm). Additionally, automation and documentation require the following:
+
+1. GNU make, Ninja, CDT Eclipse or Xcode (only tested on make and ninja as of this writing)
+2. cmake
+3. doxygen and dot if you want to generate documentation
+4. typora for nice rendering of markdown
+5. bash, perl, and usual Linux suspects
+
+#### Scripts
 
 A simple `build` script was created to further automate the process if working under
 **bash**. The script and some related pieces are located in the accompanying `bin/`
