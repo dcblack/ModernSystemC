@@ -11,8 +11,16 @@
 namespace {
   char const * const MSGID{ "/Doulos/Example/Modern/main" };
 }
-std::map<std::string,std::string> cmdline;
-std::ostringstream mout;
+
+/**
+ * Globals
+ */
+std::map<std::string,std::string> cmdline; ///< parsed from command-line
+std::ostringstream                mout;    ///< Used by report.hpp
+
+/**
+ * @brief Entry point for SystemC
+ */
 int sc_main( int argc, char* argv[] )
 {
   using namespace sc_core;
@@ -48,7 +56,7 @@ int sc_main( int argc, char* argv[] )
   }
 
   /**...........................................................................
-   * Test fpsqrt
+   * @brief Test fpsqrt
    */
   {
     std::vector<FixedPt_t> sqrs = { 0, 1, 2, 4, 9.5, 6.4, 64.5, 100, 100.5, 95, 10000, 11200 };
