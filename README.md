@@ -4,6 +4,11 @@
 
 Illustrate various C++11/14/17 techniques with SystemC 2.3.2. This project is hosted on github at https://github.com/dcblack/ModernSystemC.git .
 
+#### Note
+
+Header files use the naming extension `.hpp` because it is useful to distinguish between code that is pure C vs C++. This is contrary to the habits
+of many SystemC coders, but can be useful when mixing various sources.
+
 ## Design
 
 A simple design was chosen to illustrate a variety of features. Basically
