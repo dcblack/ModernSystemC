@@ -46,7 +46,7 @@ do {                                             \
   if(!(expr)) SC_REPORT_FATAL( "Assertion failed: ", # expr << " " << stream );\
 } while (0)
 #else
-#define ASSERT(expr)
+#define ASSERT(expr,stream)
 #endif
 //
 #define SC_ALWAYS SC_NONE
