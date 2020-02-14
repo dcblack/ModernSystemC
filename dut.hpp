@@ -6,24 +6,28 @@
 #include "common.hpp"
 #include <systemc>
 #include <memory>
-struct Processing_module;
+/**
+ * Forward declarations
+ */
+// YOUR DECLARTIONS HERE
+
 struct Dut_module : sc_core::sc_module
 {
   /**
    * Ports
    */
-  sc_core::sc_port<sc_core::sc_fifo_in_if<RawData_t>>     input_port { "input_port" };
-  sc_core::sc_export<sc_core::sc_signal_in_if<FixedPt_t>> out_xport  { "out_xport"  };
+  // YOUR PORTS HERE
+
   /**
    * Constructors
    */
   Dut_module( sc_core::sc_module_name instance );
   ~Dut_module( void );
+
   /**
-   * Ports
+   * Components
    */
-  std::unique_ptr<Processing_module> process;
-  std::unique_ptr<sc_core::sc_clock> clock;
-  sc_core::sc_buffer<FixedPt_t>      result_buffer { "result_buffer" };
+  // YOUR INSTANCES HERE
+
 };
 #endif/*DUT_HPP*/
