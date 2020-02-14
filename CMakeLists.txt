@@ -30,6 +30,7 @@ target_sources( modern PRIVATE
   duplicator.cpp
   fpsqrt.cpp
   objection.cpp
+  dut.cpp
   processing.cpp
   stimulus.cpp
   top.cpp

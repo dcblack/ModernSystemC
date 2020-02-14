@@ -3,6 +3,7 @@
 # Modern SystemC Project
 
 Illustrate various C++11/14/17 techniques with SystemC 2.3.2. This project is hosted on github at https://github.com/dcblack/ModernSystemC.git .
+The notion of "modern C++" means, C++ syntax and library features from 2011 onward.
 
 #### Note
 
@@ -12,18 +13,18 @@ of many SystemC coders, but can be useful when mixing various sources.
 ## Design
 
 A simple design was chosen to illustrate a variety of features. Basically
-a processing module takes a 3-D vector (x, y, z) coordinate and outputs its
+the processing module takes a 3-D vector (x, y, z) coordinate and outputs its
 magnitude. Fixed-point numbers are demonstrated.
 
-Key features of C++ that are illustrated include:
+Key features of modern C++ that are illustrated include:
 
 - Uniform initialization, std::initializer_list
-- std::unique_ptr, std::valarray, std::default_random_engine
+- `std::unique_ptr`, `std::valarray`, `std::default_random_engine`
 - for-each loop
-- auto type inference
+- `auto` type inference
 - Explicit default implementation
 - Override safety
-- User-defined literals (sc_time)
+- User-defined literals (e.g. `sc_time`)
 
 Verification features include:
 
@@ -75,7 +76,7 @@ and creation of all build artifacts in the `build/` subdirectory.
 
 #### Prerequisites
 
-This project requires a moder C++ compiler such as g++ (part of GCC) or clang++ (part of llvm). Additionally, automation and documentation require the following:
+This project requires a modern C++ compiler such as g++ (part of GCC) or clang++ (part of llvm). Additionally, automation and documentation require the following:
 
 1. GNU make, Ninja, CDT Eclipse or Xcode (only tested on make and ninja as of this writing)
 2. cmake
