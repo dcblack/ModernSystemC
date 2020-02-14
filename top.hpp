@@ -6,12 +6,19 @@
 #include "common.hpp"
 #include <systemc>
 #include <memory>
+/**
+ * Forward declarations
+ */
 struct Stimulus_module;
 struct Duplicator_module;
 struct Dut_module;
 struct Checker_module;
+
 struct Top_module : sc_core::sc_module
 {
+  /**
+   * Constructors
+   */
   Top_module( sc_core::sc_module_name instance );
   ~Top_module( void );
   /**
@@ -22,5 +29,6 @@ struct Top_module : sc_core::sc_module
   std::unique_ptr<Dut_module>        dut;
   std::unique_ptr<Checker_module>    check;
   sc_core::sc_fifo<RawData_t>        raw_fifo      { "raw_fifo", FIFO_DEPTH };
+
 };
 #endif/*TOP_HPP*/

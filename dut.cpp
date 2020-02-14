@@ -3,18 +3,19 @@
  * @brief Dut-level interconnect implementation
  */
 #include "dut.hpp"
-#include "processing.hpp"
 #include "sc_cxx11.hpp"
+#include "processing.hpp"
+
 using namespace sc_core;
 
 //..............................................................................
 Dut_module::Dut_module( sc_module_name instance ) //< Constructor
-{
   /**
    * Instantiate
    */
-  process = std::make_unique<Processing_module> ( "process" );
-  clock   = std::make_unique<sc_clock>          ( "clock", 10_ns );
+: process ( std::make_unique<Processing_module> ( "process" ) )
+, clock   ( std::make_unique<sc_clock>          ( "clock", 10_ns ) )
+{
   /**
    * Connect
    */
