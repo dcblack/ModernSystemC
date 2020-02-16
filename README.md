@@ -2,19 +2,15 @@
 <!-- For doxygen --> \mainpage
 # Modern SystemC Project
 
-Illustrate various C++11/14/17 techniques with SystemC 2.3.2. This project is hosted on github at https://github.com/dcblack/ModernSystemC.git .
-The notion of "modern C++" means, C++ syntax and library features from 2011 onward.
+Illustrate various C++11/14/17 techniques with SystemC 2.3.2. This project is hosted on github at https://github.com/dcblack/ModernSystemC.git . The notion of "modern C++" means, C++ syntax and library features from 2011 onward.
 
 #### Note
 
-Header files use the naming extension `.hpp` because it is useful to distinguish between code that is pure C vs C++. This is contrary to the habits
-of many SystemC coders, but can be useful when mixing various sources.
+Header files use the naming extension `.hpp` because it is useful to distinguish between code that is pure C vs C++. This is contrary to the habits of many SystemC coders, but can be useful when mixing various sources.
 
 ## Design
 
-A simple design was chosen to illustrate a variety of features. Basically
-the processing module takes a 3-D vector (x, y, z) coordinate and outputs its
-magnitude. Fixed-point numbers are demonstrated.
+A simple design was chosen to illustrate a variety of features. Basically the processing module takes a 3-D vector (x, y, z) coordinate and outputs its magnitude. Fixed-point numbers are demonstrated.
 
 Key features of modern C++ that are illustrated include:
 
@@ -32,7 +28,7 @@ Verification features include:
 - Objection mechanism to determine end of simulation
 - Checking error counts for PASS/FAIL determination
 
-#### Challenge
+#### Challenge #1
 
 Identify as many features from the preceding as you are able. If you are familiar with C++98/03, but unfamiliar with C++11 and beyond, I highly recommend getting a book on the topic. The following are some favorites in my library in no particular order:
 
@@ -180,6 +176,16 @@ make docs 2>&1 | tee -a build.log
 make modern 2>&1 | tee -a build.log
 env LD_LIBRARY_PATH=$SYSTEMC/lib* ./modern 2>&1 | grep -v ^$ | tee run.log
 popd
+```
+
+#### Challenge #2
+
+Assuming you created a git clone: checkout the branch `exercise` and try your hand at filling in the blanks for connectivity and declaration.
+
+```
+git checkout exercise
+edit ???.?pp
+build -run
 ```
 
 <!--///* The end *///-->
