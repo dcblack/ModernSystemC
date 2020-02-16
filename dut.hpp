@@ -9,7 +9,7 @@
 /**
  * Forward declarations
  */
-// YOUR DECLARTIONS HERE
+// YOUR DECLARATIONS HERE
 
 struct Dut_module : sc_core::sc_module
 {
