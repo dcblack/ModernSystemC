@@ -4,31 +4,37 @@
 #include "top.hpp"
 #include "report.hpp"
 #include "fpsqrt.hpp"
+#include "wallclock.hpp"
 #include <string>
 #include <map>
 #include <vector>
+#include <memory>
+
+using namespace sc_core;
 
 namespace {
-  char const * const MSGID{ "/Doulos/Example/Modern/main" };
+  char const * const MSGID{ "/Doulos Inc/Example/Modern/main" };
+  double elaboration_cpuTime=-1.0, starting_cpuTime=-1.0, finished_cpuTime=-1.0;
+  int summary( void );
 }
 
 /**
  * Globals
  */
 std::map<std::string,std::string> cmdline; ///< parsed from command-line
-std::ostringstream                mout;    ///< Used by report.hpp
 
 /**
  * @brief Entry point for SystemC
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 int sc_main( int argc, char* argv[] )
 {
-  using namespace sc_core;
+#pragma GCC diagnostic pop
 
   /**...........................................................................
    * Scan command-line for options
    */
-  bool debugging { false };
   std::string others;
   for( int i=1; i<sc_argc(); ++i ) {
     std::string arg(sc_argv()[i]);
@@ -74,36 +80,82 @@ int sc_main( int argc, char* argv[] )
   if( cmdline.count("-d") > 0 ) {
     sc_report_handler::set_verbosity_level( SC_DEBUG );
   }
+  // Simplify error handling by avoiding the SC_THROW
   sc_report_handler::set_actions( SC_ERROR, SC_DISPLAY | SC_LOG );
 
   /**...........................................................................
    * Instantiate
    */
-  Top_module top{ "top" };
+  elaboration_cpuTime = get_cpu_time(); //< Capture start of elaboration
+  std::unique_ptr<Top_module> top;
+  try {
+    // Construct top-level
+    top.reset(new Top_module("top"));
+  } catch (sc_core::sc_exception& e) {
+    REPORT(INFO,"\n" << e.what() << "\n\n*** Please fix elaboration errors and retry. ***");
+    return summary();
+  } catch (...) {
+    REPORT(INFO,"\n Error: *** Caught unknown exception during elaboration. ***");
+    return summary();
+  }//endtry
 
   /**...........................................................................
    * Simulate
    */
-  sc_start();
+  sc_core::sc_time finished_simTime;
+  try {
+    REPORT(INFO,"Starting kernel");
+    starting_cpuTime = get_cpu_time(); //< Capture start of simulation
+    sc_core::sc_start();
+    finished_simTime = sc_core::sc_time_stamp();
+    finished_cpuTime = get_cpu_time();
+  } catch (sc_core::sc_exception& e) {
+    REPORT(WARNING,"\n\nCaught exception during active simulation.\n" << e.what());
+  } catch (...) {
+    REPORT(WARNING,"Error: Caught unknown exception during active simulation.");
+  }//endtry
+  REPORT(INFO,"Exited kernel at " << finished_simTime);
 
+  // Clean up
   if ( not sc_end_of_simulation_invoked() )
   {
     SC_REPORT_ERROR( MSGID, "Simulation stopped without explicit sc_stop()");
-    sc_stop();
+    sc_stop(); //< invoke end_of_simulation() overrides
   }
 
-  /**...........................................................................
-   * Report results
-   */
-  if ( ( sc_report_handler::get_count( SC_ERROR )
-         + sc_report_handler::get_count( SC_FATAL )
-       ) == 0 
-     )
+  return summary();
+
+}
+
+#include <iomanip>
+
+namespace {
+
+  using namespace std;
+
+  // Summarize results
+  int summary( void )
   {
-     SC_REPORT_INFO_VERB( MSGID, "PASSED", SC_NONE );
-     return 0;
-  } else {
-     SC_REPORT_INFO_VERB( MSGID, "FAILED", SC_NONE );
-     return 1;
+    std::string kind = "Simulation";
+    if ( starting_cpuTime < 0.0 ) {
+      kind = "Elaboration";
+      starting_cpuTime = finished_cpuTime = get_cpu_time();
+    } 
+    if ( finished_cpuTime < 0.0 ) {
+      finished_cpuTime = get_cpu_time();
+    }
+    auto errors = sc_report_handler::get_count(SC_ERROR)
+                + sc_report_handler::get_count(SC_FATAL);
+    REPORT(INFO, "\n" << std::string(80,'#') << "\nSummary for " << sc_argv()[0] << ":\n  "
+      << "CPU elaboration time " << std::setprecision(4) << (starting_cpuTime - elaboration_cpuTime) << " sec\n  "
+      << "CPU simulation  time " << setprecision(4) << (finished_cpuTime - starting_cpuTime) << " sec\n  "
+      << setw(2) << sc_report_handler::get_count(SC_INFO)    << " informational messages" << "\n  "
+      << setw(2) << sc_report_handler::get_count(SC_WARNING) << " warnings" << "\n  "
+      << setw(2) << sc_report_handler::get_count(SC_ERROR)   << " errors"   << "\n  "
+      << setw(2) << sc_report_handler::get_count(SC_FATAL)   << " fatals"   << "\n\n"
+      << kind << " " << (errors?"FAILED":"PASSED")
+    );
+    return (errors?1:0);
   }
+
 }
