@@ -21,6 +21,13 @@ project(      modern
 set( default_build_type "Debug" )
 include( /apps/cmake/SystemC.cmake )
 add_compile_definitions( SC_INCLUDE_FX SC_INCLUDE_DYNAMIC_PROCESSES )
+if (MSVC)
+    # warning level 4 and all warnings as errors
+    add_compile_options(/W4 /WX)
+else()
+    # lots of warnings and all warnings as errors
+    add_compile_options(-g -Wall -Wextra -pedantic -Werror)
+endif()
 
 add_executable( modern )
 target_include_directories( modern PRIVATE . )
