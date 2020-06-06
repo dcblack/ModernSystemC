@@ -8,7 +8,7 @@
 #include <cstdint>
 #include "coord.hpp"
 #define FIFO_DEPTH 1
-#define INT_WIDTH 16
+#define BINARY_PT 16
 using RawData_t = Coordinate;
-using FixedPt_t = sc_dt::sc_fixed<32,INT_WIDTH>; // +/- 32767.9999
+using FixedPt_t = sc_dt::sc_fixed<32,BINARY_PT>; // +/- 32767.9999
 #endif/*COMMON_HPP*/
