@@ -32,6 +32,8 @@ endif()
 add_executable( modern )
 target_include_directories( modern PRIVATE . )
 target_sources( modern PRIVATE
+  report.cpp
+  wallclock.cpp
   coord.cpp
   checker.cpp
   duplicator.cpp
