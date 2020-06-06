@@ -14,6 +14,7 @@ namespace {
 
 //..............................................................................
 Checker_module::Checker_module( sc_module_name instance ) //< Constructor
+: sc_module(instance)
 {
   SC_HAS_PROCESS( Checker_module );
   SC_METHOD( received_method );

@@ -13,6 +13,7 @@ namespace {
 
 //..............................................................................
 Processing_module::Processing_module( sc_module_name instance ) //< Constructor
+: sc_module( instance )
 {
   SC_HAS_PROCESS( Processing_module );
   SC_CTHREAD( processing_thread, clk_port.pos() );

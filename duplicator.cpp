@@ -10,6 +10,7 @@ namespace {
 
 //..............................................................................
 Duplicator_module::Duplicator_module( sc_module_name instance ) //< Constructor
+: sc_module( instance )
 {
   // Connectivity
   out1_xport.bind( out1_fifo );

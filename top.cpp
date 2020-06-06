@@ -12,6 +12,7 @@ using namespace sc_core;
 
 //..............................................................................
 Top_module::Top_module( sc_module_name instance ) //< Constructor
+: sc_module( instance )
 {
   /**
    * Instantiate

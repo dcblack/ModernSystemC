@@ -10,10 +10,11 @@ using namespace sc_core;
 
 //..............................................................................
 Dut_module::Dut_module( sc_module_name instance ) //< Constructor
+: sc_module( instance )
   /**
    * Instantiate
    */
-: process ( std::make_unique<Processing_module> ( "process" ) )
+, process ( std::make_unique<Processing_module> ( "process" ) )
 , clock   ( std::make_unique<sc_clock>          ( "clock", 10_ns ) )
 {
   /**

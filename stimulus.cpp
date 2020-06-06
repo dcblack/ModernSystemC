@@ -12,6 +12,7 @@ namespace {
 
 //..............................................................................
 Stimulus_module::Stimulus_module( sc_module_name instance ) //< Constructor
+: sc_module( instance )
 {
   SC_HAS_PROCESS( Stimulus_module );
   SC_THREAD( stimulus_thread );
