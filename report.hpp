@@ -43,10 +43,10 @@ do {                                             \
 // and (B) control sc_assert behavior (i.e. not unconditional abort on failure).
 #ifndef NDEBUG
 #define ASSERT(expr,stream) do {\
-  if(!(expr)) SC_REPORT_FATAL( "Assertion failed: ", # expr << " " << stream );\
+  if(!(expr)) REPORT(FATAL, "Assertion failed: " << # expr << ".  " << stream );\
 } while (0)
 #else
-#define ASSERT(expr)
+#define ASSERT(expr,stream)
 #endif
 //
 #define SC_ALWAYS SC_NONE

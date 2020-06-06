@@ -34,7 +34,7 @@ Identify as many features from the preceding as you are able. If you are familia
 
 - [C++ Rocks by Alex Korban](https://cpprocks.com)
 - [Effective Modern **C**++: 42 Specific Ways to Improve Your Use of **C**++**11** and **C**++14 by Scott Meyers](https://www.amazon.com/gp/product/B00PGCMGDQ/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1)
-- [The C++ Programing Language by Bjarne Stroustrup](https://read.amazon.com/kp/embed?asin=B00DUW4BMS&preview=newtab&linkCode=kpe&ref_=cm_sw_r_kb_dp_wKg7CbZR8QJNX)
+- [The C++ Programing Language by Bjarne Stroustrup, 4th edition or later](https://read.amazon.com/kp/embed?asin=B00DUW4BMS&preview=newtab&linkCode=kpe&ref_=cm_sw_r_kb_dp_wKg7CbZR8QJNX)
 
 ## Block diagram
 
