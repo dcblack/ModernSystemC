@@ -52,7 +52,7 @@ struct Coordinate
   Coordinate operator*( T rhs ) {
     Coordinate result( *this );
     for( auto& v : result.m_data ) v *= rhs;
-    return std::move(result);
+    return result;
   }
   friend Coordinate operator*( T lhs, Coordinate rhs );
   friend std::ostream& operator<<( std::ostream& os, const Coordinate& rhs );

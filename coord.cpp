@@ -8,7 +8,7 @@ using namespace sc_dt;
 //..............................................................................
 Coordinate operator*( Coordinate::T lhs, Coordinate rhs ) {
   for( auto& v : rhs.m_data ) v *= lhs;
-  return std::move(rhs);
+  return rhs;
 }
 
 //..............................................................................
