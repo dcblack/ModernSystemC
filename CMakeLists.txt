@@ -38,7 +38,6 @@ target_sources( modern PRIVATE
   checker.cpp
   duplicator.cpp
   fpsqrt.cpp
-  objection.cpp
   dut.cpp
   processing.cpp
   stimulus.cpp
