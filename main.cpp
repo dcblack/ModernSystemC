@@ -26,11 +26,8 @@ std::map<std::string,std::string> cmdline; ///< parsed from command-line
 /**
  * @brief Entry point for SystemC
  */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-int sc_main( int argc, char* argv[] )
+int sc_main( [[maybe_unused]]int argc, [[maybe_unused]]char* argv[] )
 {
-#pragma GCC diagnostic pop
 
   /**...........................................................................
    * Scan command-line for options
@@ -55,8 +52,8 @@ int sc_main( int argc, char* argv[] )
   if( others.length() > 0 ) cmdline[ "~" ] = others;
   if( cmdline.size() > 0 ) {
     MESSAGE( "Command-line options:" );
-    for( auto const& o: cmdline ) {
-      MESSAGE( "\n  " << o.first << " = " << o.second );
+    for( auto const& [option, value] : cmdline ) {
+      MESSAGE( "\n  " << option << " = " << value );
     }
     MEND( ALWAYS );
   }
