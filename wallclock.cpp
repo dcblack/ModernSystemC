@@ -41,7 +41,7 @@ double get_cpu_time(){
 
 //  Posix/Linux
 #else
-#include <sys/time.h>
+#include <ctime>
 double get_wall_time(){
   struct timeval time;
   if (gettimeofday(&time,NULL)){
