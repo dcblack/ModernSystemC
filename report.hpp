@@ -33,6 +33,7 @@ extern std::ostringstream mout;
   #define DELETE_THIS_LINE(lno,message)
 #else
 
+// For type: WARNING, ERROR, FATAL
 #define REPORT(type,stream)                      \
 do {                                             \
   mout << DEC << stream << std::ends;            \
@@ -55,6 +56,7 @@ do {                                             \
 #define SC_HYPER  1024
 #define DEVID ((std::string("(")+name()+")").c_str())
 #define NOINFO(level,stream)
+// For level: NONE, LOW, MEDIUM, HIGH, DEBUG
 #define INFO(level,stream)                                                          \
 do {                                                                                \
   if( sc_core::sc_report_handler::get_verbosity_level() >= (sc_core::SC_##level) ) {\
