@@ -18,7 +18,7 @@ private:
   tlm::tlm_fifo<FixedPt_t>        expect_fifo { "expect_fifo", -2 };
   tlm::tlm_fifo<FixedPt_t>        result_fifo { "result_fifo", -2 };
   // Attributes
-  bool                            anticipate_reset { false };
+  [[maybe_unused]]bool            anticipate_reset { false };
   size_t                          verified_count   { 0 };
   size_t                          mismatches       { 0 };
   // Processes and overrides

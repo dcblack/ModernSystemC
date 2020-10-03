@@ -6,26 +6,16 @@
 #include <string>
 #include <ostream>
 #include <valarray>
+#include <algorithm>
 struct Coordinate
 {
   using T = double;
   Coordinate( const T& x, const T& y, const T& z ): m_data( {x, y, z} ) {}
   Coordinate( void ) = default;
-  ~Coordinate( void ) = default;
-  Coordinate( const Coordinate& rhs ) : m_data( rhs.m_data ) {}
-  Coordinate( Coordinate&& rhs ) : m_data( std::move( rhs.m_data ) ) {}
-  Coordinate& operator=( const Coordinate& rhs ) {
-    if( this != &rhs ) {
-      m_data = rhs.m_data;
-    }
-    return *this;
-  }
-  Coordinate& operator=( Coordinate&& rhs ) {
-    m_data = std::move( rhs.m_data );
-    return *this;
-  }
+  // Rule of 0
+  // Need comparison for sc_signal<T>
   bool operator==( const Coordinate& rhs ) const {
-    return *this == rhs;
+    return std::equal( std::begin(m_data), std::end(m_data), std::begin(rhs.m_data) );
   }
   // Convenience
   T& x( void ) { return m_data[0]; }
@@ -46,16 +36,28 @@ struct Coordinate
     m_data -= rhs.m_data;
     return *this;
   }
-  const Coordinate& operator-( const Coordinate& rhs ) {
-    return Coordinate(*this) -= rhs;
+  Coordinate operator-( const Coordinate& rhs ) {
+    auto result = Coordinate(*this);
+    result -= rhs;
+    return result;
   }
+  // Scale
   Coordinate operator*( T rhs ) {
     Coordinate result( *this );
     for( auto& v : result.m_data ) v *= rhs;
     return result;
   }
-  friend Coordinate operator*( T lhs, Coordinate rhs );
-  friend std::ostream& operator<<( std::ostream& os, const Coordinate& rhs );
+  // Scale
+  friend Coordinate operator*( T lhs, Coordinate rhs )
+  {
+    for( auto& v : rhs.m_data ) v *= lhs;
+    return rhs;
+  }
+  friend std::ostream& operator<<( std::ostream& os, const Coordinate& rhs )
+  {
+    os << "{" << rhs.x() << "," << rhs.y() << "," << rhs.z() << "}";
+    return os;
+  }
 private:
   std::valarray<T> m_data;
 };
