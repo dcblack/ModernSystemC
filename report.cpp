@@ -1,3 +1,5 @@
 #include "report.hpp"
 
-std::ostringstream mout;
+#if __cplusplus <= 201700L
+  std::ostringstream Report::mout;
+#endif
