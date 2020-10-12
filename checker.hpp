@@ -4,8 +4,8 @@
 #ifndef CHECKER_HPP
 #define CHECKER_HPP
 #include "common.hpp"
-#include <systemc>
-#include <tlm>
+#include "systemc.hpp"
+#include "tlm.hpp"
 struct Checker_module : sc_core::sc_module
 {
   Checker_module( sc_core::sc_module_name instance );
