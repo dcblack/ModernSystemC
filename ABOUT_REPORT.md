@@ -13,6 +13,7 @@ Syntax
 - `ASSERT(expression, message_stream)`
 - `REPORT(message_type, message_stream);`
 - `INFO(verbosity_level, message_stream);`
+- `DEBUG(message_stream);`
 - `MESSAGE(message_stream);`
 - `MEND(verbosity_level);`
 - `RULER(char);`
@@ -47,22 +48,30 @@ private:
 };
 ```
 
+Note that the DEBUG macro has an additional qualification. It checks command-line arguments
+for an option to enable the debug message. Using `-debugall` unconditionally enables all
+debug statements. Using `-debug=INSTANCE` allows you to enable it only when the current instance
+matches the specified instance. This argument may be repeated.
+
 Usage Example
 -------------
 
 ```cpp
 #include "report/report.hpp"
-ASSERT( n > -2, "Value of n may only be positive or -1. Currently " << n );
 namespace { char const * const MSGID{ "/Doulos/Example/Report" }; }
-REPORT(ERROR,"Data " << data << " doesn't match expected " << expected);
-INFO(DEBUG,"Packet contains " << packet);
-TODO("Fix report handler to remove blank line after REPORT_INFO");
-NOT_YET_IMPLEMENTED();
-MESSAGE( "Map contents:\n" );
-for( const auto& v : my_map ) {
- MESSAGE( "  " << v.first << ": " << v.second << "\n" );
+void thread() {
+  ASSERT( n > -2, "Value of n may only be positive or -1. Currently " << n );
+  REPORT( ERROR, "Data " << data << " doesn't match expected " << expected );
+  INFO( HIGH, "Packet contains " << packet );
+  DEBUG( "Suspect contains " << packet );
+  TODO( "Fix report handler to remove blank line after REPORT_INFO" );
+  NOT_YET_IMPLEMENTED();
+  MESSAGE( "Map contents:\n" );
+  for( const auto& v : my_map ) {
+   MESSAGE( "  " << v.first << ": " << v.second << "\n" );
+  }
+  MEND( HIGH ); // or REPORT( WARNING, "" );
 }
-MEND( HIGH ); // or REPORT( WARNING, "" );
 ```
 
 ### The end

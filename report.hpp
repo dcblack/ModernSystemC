@@ -197,7 +197,7 @@ do {                                                                            
 #define RULER(c) MESSAGE( std::string( 80, c ) << "\n" )
 
 #define TODO(stream) REPORT( WARNING, "TODO: " << stream )
-#define NOT_YET_IMPLEMENTED() REPORT( WARNING, __func__ << " is not yet implemented." )
+#define NOT_YET_IMPLEMENTED() REPORT( WARNING, __PRETTY_FUNCTION__ << " is not yet implemented." )
 //
 struct DELETE_THIS
 {
