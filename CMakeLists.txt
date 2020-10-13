@@ -19,7 +19,7 @@ project(      modern
   )
 
 set( default_build_type "Debug" )
-include( /apps/cmake/SystemC.cmake )
+include( $ENV{SCC_APPS}/cmake/SystemC.cmake )
 add_compile_definitions( SC_INCLUDE_FX SC_INCLUDE_DYNAMIC_PROCESSES )
 if (MSVC)
     # warning level 4 and all warnings as errors
