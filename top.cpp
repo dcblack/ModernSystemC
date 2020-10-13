@@ -7,7 +7,7 @@
 #include "duplicator.hpp"
 #include "dut.hpp"
 #include "checker.hpp"
-#include "sc_cxx11.hpp"
+#include "sc_time_literals.hpp"
 using namespace sc_core;
 
 //..............................................................................

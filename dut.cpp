@@ -3,10 +3,11 @@
  * @brief Dut-level interconnect implementation
  */
 #include "dut.hpp"
-#include "sc_cxx11.hpp"
+#include "sc_time_literals.hpp"
 #include "processing.hpp"
 
 using namespace sc_core;
+using namespace sc_core::literals;
 
 //..............................................................................
 Dut_module::Dut_module( sc_module_name instance ) //< Constructor

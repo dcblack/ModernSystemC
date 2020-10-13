@@ -5,7 +5,7 @@
 
 @brief Reporting macro extensions
 
-This is a simplified version of David's reporting extensions.
+This is a simplified version of my reporting extensions.
 
 The basic idea is to simplify syntax when reporting on messages more
 complex than a basic string. Also, simplifies specification of the
@@ -97,13 +97,13 @@ See `ABOUT_REPORT.md` for more information.
 #include <sstream>
 #include <iomanip>
 struct Report {
-#if __cplusplus >= 201711L
+#if __cplusplus >= 201703L
   inline // Obliviates the need for report.cpp
 #endif
   static std::ostringstream mout;
 };
-#define HEX std::hex << std::showbase
-#define DEC std::dec << std::noshowbase << std::setfill(' ')
+#define STREAM_HEX std::hex << std::showbase
+#define STREAM_DEC std::dec << std::noshowbase << std::setfill(' ')
 
 #ifdef __SYNTHESIS__
   #define REPORT(type,stream)
@@ -114,6 +114,7 @@ struct Report {
   #define DEVID (std::string("(")+name()+")").c_str()
   #define NOINFO(level,stream)
   #define INFO(level,stream)
+  #define DEBUG(level,stream)
   #define MESSAGE(stream)
   #define MEND(level)
   #define RULER(c)
@@ -122,14 +123,14 @@ struct Report {
   #define DELETE_THIS_LINE(lno,message)
 #else
 
-// For type: WARNING, ERROR, FATAL
+// For type: WARNING, ERROR, FATAL (use INFO() for INFO level messages)
 #define REPORT(type,stream)                      \
 do {                                             \
-  Report::mout << std::dec << stream << std::ends;     \
+  Report::mout << STREAM_DEC << stream << std::ends;     \
   auto str = Report::mout.str(); Report::mout.str(""); \
   SC_REPORT_##type( MSGID, str.c_str() );        \
 } while (0)
-//
+
 // Use the following to (A) add more information in the event of failure, and
 // and (B) control sc_assert behavior (i.e. not unconditional abort on failure).
 #ifndef NDEBUG
@@ -139,48 +140,51 @@ do {                                             \
 #else
 #define ASSERT(expr,stream)
 #endif
-//
+
 #define SC_ALWAYS SC_NONE
 #define SC_NEVER  16*KB
 #define SC_HYPER  1024
+
 #define DEVID ((std::string("(")+name()+")").c_str())
+
 #define NOINFO(level,stream)
+
 // For level: NONE, LOW, MEDIUM, HIGH, DEBUG
 #define INFO(level,stream)                                                          \
 do {                                                                                \
-  if( sc_core::sc_report_handler::get_verbosity_level()                        \
-        >= (sc_core::SC_##level) ) {                                           \
-    Report::mout << std::dec << stream;                                        \
-    auto now = sc_core::sc_time_stamp();                                       \
-    if( now > sc_core::SC_ZERO_TIME                                            \
-        or sc_core::sc_get_status() >= sc_core::SC_START_OF_SIMULATION ) {     \
-      Report::mout << std::dec << " at " << now;                               \
-    }                                                                               \
-    Report::mout << std::ends;                                                 \
-    if( (sc_core::SC_##level) > sc_core::SC_DEBUG ) {                               \
-      std::string id{"DEBUG("};                                                     \
-      id+=__FILE__ ; id+=":"; id+=std::to_string(__LINE__)+")";                     \
-      size_t p0=id.find("/"),p1=id.find_last_of("/");                               \
-      if(p1!=std::string::npos) id.erase(p0,p1-p0+1);                               \
-      auto str = Report::mout.str(); Report::mout.str("");                     \
-      SC_REPORT_INFO_VERB( id.c_str(), str.c_str(), (sc_core::SC_##level) );        \
-    } else {                                                                        \
-      auto str = Report::mout.str(); Report::mout.str("");                     \
-      SC_REPORT_INFO_VERB( MSGID, str.c_str(), (sc_core::SC_##level) );             \
-    }                                                                               \
-  }                                                                                 \
+  if( sc_core::sc_report_handler::get_verbosity_level()                      \
+        >= (sc_core::SC_##level) ) {                                         \
+    Report::mout << STREAM_DEC << stream;                                    \
+    auto now = sc_core::sc_time_stamp();                                     \
+    if( now > sc_core::SC_ZERO_TIME                                          \
+        or sc_core::sc_get_status() >= sc_core::SC_START_OF_SIMULATION ) {   \
+      Report::mout << STREAM_DEC << " at " << now;                           \
+    }                                                                        \
+    Report::mout << std::ends;                                               \
+    if( (sc_core::SC_##level) > sc_core::SC_DEBUG ) {                        \
+      std::string id{"DEBUG("};                                              \
+      id+=__FILE__ ; id+=":"; id+=std::to_string(__LINE__)+")";              \
+      size_t p0=id.find("/"),p1=id.find_last_of("/");                        \
+      if(p1!=std::string::npos) id.erase(p0,p1-p0+1);                        \
+      auto str = Report::mout.str(); Report::mout.str("");                   \
+      SC_REPORT_INFO_VERB( id.c_str(), str.c_str(), (sc_core::SC_##level) ); \
+    } else {                                                                 \
+      auto str = Report::mout.str(); Report::mout.str("");                   \
+      SC_REPORT_INFO_VERB( MSGID, str.c_str(), (sc_core::SC_##level) );      \
+    }                                                                        \
+  }                                                                          \
 } while (0)
 
 #ifdef NDEBUG
 #define DEBUG()
 #else
 #include "commandline.hpp"
-#define DEBUG(stream) do {                                                     \
-  if( sc_core::sc_report_handler::get_verbosity_level() >= sc_core::SC_DEBUG   \
-  and ( Commandline::has_opt("-debugall")                                      \
-     or Commandline::has_opt("-debug="s + basename() ) ) ) {                   \
-     INFO(DEBUG,stream);                                                       \
-  }                                                                            \
+#define DEBUG(stream) do {                                                   \
+  if( sc_core::sc_report_handler::get_verbosity_level() >= sc_core::SC_DEBUG \
+  and ( Commandline::has_opt("-debugall")                                    \
+     or Commandline::has_opt("-debug="s + basename() ) ) ) {                 \
+     INFO(DEBUG,stream);                                                     \
+  }                                                                          \
 } while(0)
 #endif
 
@@ -207,7 +211,6 @@ struct DELETE_THIS
             ::sc_core::SC_WARNING, "Code incomplete", message, filename, lineno );
   }
 };
-
 #define DELETE_THIS_LINE(lno,message) const DELETE_THIS lno{ __FILE__, __LINE__, #message }
 
 #endif/*__SYNTHESIS__*/
