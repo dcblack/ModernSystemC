@@ -144,6 +144,7 @@ namespace {
     auto errors = sc_report_handler::get_count(SC_ERROR)
                 + sc_report_handler::get_count(SC_FATAL);
     REPORT(INFO, "\n" << std::string(80,'#') << "\nSummary for " << sc_argv()[0] << ":\n  "
+      << "C++ " << __cplusplus << "L\n  "
       << "CPU elaboration time " << std::setprecision(4) << (starting_cpuTime - elaboration_cpuTime) << " sec\n  "
       << "CPU simulation  time " << setprecision(4) << (finished_cpuTime - starting_cpuTime) << " sec\n  "
       << setw(2) << sc_report_handler::get_count(SC_INFO)    << " informational messages" << "\n  "
