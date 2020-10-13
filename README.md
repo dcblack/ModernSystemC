@@ -97,12 +97,17 @@ using a modern version of C++. Nicely enough, SystemC now has basic support for 
 itself.
 
 
-
 ### Building SystemC
 
 You can obtain source for SystemC from <https://www.accellera.org/downloads/standards/systemc>. Registration is required, but you need not worry about SPAM.
 
 Make certain your compiler supports C++14 (or better). Most compilers support the`--version` option.
+
+Note: MacOS (formerly OS X) users (Catalina onward) likely need to set the SDKROOT environment variable appropriately.
+
+```sh
+export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk
+```
 
 Expand the downloaded gzip and create a `build/` subdirectory within it:
 
