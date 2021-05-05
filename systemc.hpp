@@ -8,7 +8,7 @@
 #pragma GCC   diagnostic push
 #pragma GCC   diagnostic ignored "-Wunused-parameter"
 #include <systemc>
-#include <sc_time_literals.hpp>
+#include "sc_time_literals.hpp"
 #pragma clang diagnostic pop
 #pragma GCC   diagnostic pop
 //vim:syntax=systemc
