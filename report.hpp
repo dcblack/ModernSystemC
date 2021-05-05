@@ -161,7 +161,7 @@ do {                                                                            
       Report::mout << STREAM_DEC << " at " << now;                           \
     }                                                                        \
     Report::mout << std::ends;                                               \
-    if( (sc_core::SC_##level) > sc_core::SC_DEBUG ) {                        \
+    if( (sc_core::SC_##level) >= sc_core::SC_DEBUG ) {                       \
       std::string id{"DEBUG("};                                              \
       id+=__FILE__ ; id+=":"; id+=std::to_string(__LINE__)+")";              \
       size_t p0=id.find("/"),p1=id.find_last_of("/");                        \
