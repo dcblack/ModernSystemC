@@ -1,5 +1,7 @@
 #!cmake .
 
+# Any important Modern C++ defaults
+# add_compile_definitions( )
 # SystemC specific needs
 set(CMAKE_PREFIX_PATH $ENV{SYSTEMC_HOME})
 find_package(SystemCLanguage CONFIG REQUIRED)
